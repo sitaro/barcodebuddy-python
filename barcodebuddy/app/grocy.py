@@ -21,6 +21,7 @@ class GrocyClient:
     def _request(self, method: str, endpoint: str, **kwargs) -> Optional[Dict[Any, Any]]:
         """Make API request."""
         url = f"{self.url}/api/{endpoint.lstrip('/')}"
+        logger.debug(f"Grocy API call: {method} {url}")
         try:
             response = requests.request(
                 method,
@@ -29,10 +30,20 @@ class GrocyClient:
                 timeout=10,
                 **kwargs
             )
+            logger.debug(f"Grocy response: Status {response.status_code}, Content-Type: {response.headers.get('Content-Type', 'unknown')}")
             response.raise_for_status()
-            return response.json() if response.text else {}
+
+            if not response.text:
+                logger.warning("Grocy returned empty response")
+                return {}
+
+            return response.json()
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(f"Grocy API returned invalid JSON: {e}")
+            logger.error(f"Response text: {response.text[:200]}")  # First 200 chars
+            return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Grocy API error: {e}")
+            logger.error(f"Grocy API request failed: {e}")
             return None
 
     def test_connection(self) -> bool:
