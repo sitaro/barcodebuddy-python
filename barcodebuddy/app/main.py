@@ -85,7 +85,21 @@ def handle_barcode(barcode: str):
 
         if product:
             # Product exists in Grocy
-            product_id = product.get('product_id')
+            logger.debug(f"Product data from Grocy: {product}")
+
+            # Try different field names for product ID
+            product_id = product.get('product_id') or product.get('id')
+
+            if not product_id:
+                logger.error(f"No product_id found in response: {product}")
+                scan_result['status'] = 'error'
+                scan_result['message'] = f"❌ Invalid product data from Grocy"
+                # Store and return
+                recent_scans.insert(0, scan_result)
+                if len(recent_scans) > 50:
+                    recent_scans.pop()
+                return
+
             product_info = grocy_client.get_product_info(product_id)
 
             if product_info:
