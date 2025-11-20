@@ -1,0 +1,4 @@
+Flask==3.0.0
+requests==2.31.0
+evdev==1.6.1
+Werkzeug==3.0.1

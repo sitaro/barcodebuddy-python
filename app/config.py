@@ -1,0 +1,46 @@
+"""Configuration management for Home Assistant Add-on."""
+import json
+import os
+from typing import Optional
+
+
+class Config:
+    """Load and manage add-on configuration."""
+
+    def __init__(self):
+        self.config_path = "/data/options.json"
+        self._config = self._load_config()
+
+    def _load_config(self) -> dict:
+        """Load configuration from Home Assistant."""
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r') as f:
+                return json.load(f)
+        return {}
+
+    @property
+    def scanner_device(self) -> str:
+        """Get scanner device path."""
+        return self._config.get('scanner_device', '/dev/input/event3')
+
+    @property
+    def grocy_url(self) -> Optional[str]:
+        """Get Grocy URL."""
+        url = self._config.get('grocy_url', '').strip()
+        return url if url else None
+
+    @property
+    def grocy_api_key(self) -> Optional[str]:
+        """Get Grocy API key."""
+        key = self._config.get('grocy_api_key', '').strip()
+        return key if key else None
+
+    @property
+    def debug(self) -> bool:
+        """Get debug mode."""
+        return self._config.get('debug', False)
+
+    @property
+    def has_grocy(self) -> bool:
+        """Check if Grocy is configured."""
+        return self.grocy_url is not None and self.grocy_api_key is not None

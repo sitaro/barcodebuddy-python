@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Buddy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status.success { background: #10b981; color: white; }
+        .status.warning { background: #f59e0b; color: white; }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .manual-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .scan-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .scan-item {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scan-item:last-child {
+            border-bottom: none;
+        }
+
+        .scan-barcode {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .scan-time {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .scan-message {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .info-box {
+            background: #f3f4f6;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Barcode Buddy</h1>
+            <p>
+                {% if has_grocy %}
+                <span class="status success">✓ Grocy Connected</span>
+                {% else %}
+                <span class="status warning">⚠ No Grocy</span>
+                {% endif %}
+                <span class="status success">✓ Scanner Active</span>
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Manual Scan</h2>
+            <div class="manual-input">
+                <input type="text" id="barcode-input" placeholder="Enter barcode or scan..." autofocus>
+                <button onclick="submitBarcode()">Add</button>
+            </div>
+            <div class="info-box">
+                <strong>Scanner Device:</strong> {{ scanner_device }}<br>
+                <strong>Status:</strong> Waiting for scans...
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Recent Scans</h2>
+            <div class="scan-list" id="scan-list">
+                <p style="text-align: center; color: #9ca3af; padding: 40px;">
+                    No scans yet. Scan a barcode to get started!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh scans every 2 seconds
+        setInterval(loadScans, 2000);
+        loadScans();
+
+        // Handle Enter key in input
+        document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitBarcode();
+            }
+        });
+
+        function submitBarcode() {
+            const input = document.getElementById('barcode-input');
+            const barcode = input.value.trim();
+
+            if (!barcode) return;
+
+            fetch('/api/scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({barcode: barcode})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadScans();
+                }
+            });
+        }
+
+        function loadScans() {
+            fetch('/api/scans')
+                .then(response => response.json())
+                .then(scans => {
+                    const list = document.getElementById('scan-list');
+
+                    if (scans.length === 0) {
+                        list.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 40px;">No scans yet. Scan a barcode to get started!</p>';
+                        return;
+                    }
+
+                    list.innerHTML = scans.map(scan => {
+                        const time = new Date(scan.timestamp).toLocaleTimeString();
+                        const emoji = scan.status === 'success' ? '✅' :
+                                    scan.status === 'error' ? '❌' :
+                                    scan.status === 'not_found' ? '❓' : '📦';
+
+                        return `
+                            <div class="scan-item">
+                                <div>
+                                    <div>
+                                        <span class="emoji">${emoji}</span>
+                                        <span class="scan-barcode">${scan.barcode}</span>
+                                    </div>
+                                    <div class="scan-message">${scan.message}</div>
+                                    <div class="scan-time">${time}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                });
+        }
+    </script>
+</body>
+</html>
