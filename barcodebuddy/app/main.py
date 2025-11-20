@@ -87,8 +87,16 @@ def handle_barcode(barcode: str):
             # Product exists in Grocy
             logger.debug(f"Product data from Grocy: {product}")
 
-            # Try different field names for product ID
-            product_id = product.get('product_id') or product.get('id')
+            # Grocy API returns nested structure: {'product': {'id': ...}}
+            if 'product' in product and isinstance(product['product'], dict):
+                product_id = product['product'].get('id')
+                product_name = product['product'].get('name', 'Unknown')
+                # Product info is already included in the response
+                product_info = product['product']
+            else:
+                # Fallback for different API formats
+                product_id = product.get('product_id') or product.get('id')
+                product_info = None
 
             if not product_id:
                 logger.error(f"No product_id found in response: {product}")
@@ -100,7 +108,9 @@ def handle_barcode(barcode: str):
                     recent_scans.pop()
                 return
 
-            product_info = grocy_client.get_product_info(product_id)
+            # If product info wasn't in the barcode response, fetch it separately
+            if not product_info:
+                product_info = grocy_client.get_product_info(product_id)
 
             if product_info:
                 product_name = product_info.get('name', 'Unknown')
