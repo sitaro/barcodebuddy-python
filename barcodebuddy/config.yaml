@@ -19,6 +19,11 @@ devices:
 udev: true
 full_access: true
 apparmor: false
+host_ipc: true
+host_pid: true
+privileged:
+  - SYS_ADMIN
+  - SYS_RAWIO
 
 ports:
   "5000/tcp": 5000
