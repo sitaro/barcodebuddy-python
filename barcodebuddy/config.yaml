@@ -12,10 +12,14 @@ startup: application
 boot: auto
 init: false
 
-# USB-Scanner Zugriff
+# USB-Scanner Zugriff - Multiple scanners supported!
 devices:
   - "/dev/input:/dev/input:rwm"
   - "/dev/hidraw0:/dev/hidraw0:rwm"
+  - "/dev/hidraw1:/dev/hidraw1:rwm"
+  - "/dev/hidraw2:/dev/hidraw2:rwm"
+  - "/dev/hidraw3:/dev/hidraw3:rwm"
+  - "/dev/hidraw4:/dev/hidraw4:rwm"
 
 udev: true
 full_access: true
