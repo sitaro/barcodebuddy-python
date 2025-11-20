@@ -127,13 +127,10 @@ class GrocyClient:
 
         Returns the product ID if successful, None otherwise.
         """
+        # Minimal required fields - compatible with all Grocy versions
         data = {
             'name': name,
-            'description': description,
-            'location_id': 1,  # Default location
-            'qu_id_purchase': 1,  # Default quantity unit (piece)
-            'qu_id_stock': 1,
-            'qu_factor_purchase_to_stock': 1
+            'description': description
         }
         result = self._request('POST', 'objects/products', json=data)
         if result and 'created_object_id' in result:
