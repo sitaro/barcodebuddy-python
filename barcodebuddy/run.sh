@@ -46,9 +46,13 @@ else
 fi
 
 echo ""
-echo "▶️  Starting Flask application..."
+echo "▶️  Starting Flask application with input group..."
 echo ""
 
-# Start Flask app
+# Start Flask app with input group permissions
 cd /app
-python3 -u main.py
+if command -v sg >/dev/null 2>&1; then
+    exec sg input -c "python3 -u main.py"
+else
+    exec python3 -u main.py
+fi
