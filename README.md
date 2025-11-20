@@ -1,46 +1,28 @@
-# Barcode Buddy (Python) - Home Assistant Add-on
+# Barcode Buddy Python - Home Assistant Add-on Repository
 
-Modern Python-based barcode scanner with Grocy integration.
+Modern Python-based barcode scanner with Grocy integration for Home Assistant.
 
-## Features
+## Installation
 
-✅ **Simple & Clean** - Minimal Python implementation
-✅ **USB Scanner Support** - Automatic device detection
-✅ **Grocy Integration** - Direct API integration
-✅ **Web UI** - Beautiful, responsive interface
-✅ **Manual Entry** - Keyboard input supported
-✅ **Real-time Updates** - Live scan feed
-✅ **Extensible** - Easy to add features
+1. Add this repository to Home Assistant:
+   - Go to **Settings** → **Add-ons** → **Add-on Store** (three dots menu) → **Repositories**
+   - Add: `https://github.com/sitaro/barcodebuddy-python`
 
-## Configuration
+2. Install the **Barcode Buddy Python** add-on
 
-```yaml
-scanner_device: "/dev/input/event3"  # USB scanner device
-grocy_url: "http://your-grocy-url"   # Grocy instance URL
-grocy_api_key: "your-api-key"        # Grocy API key
-debug: false                          # Enable debug logging
-```
+3. Configure and start the add-on
 
-## Usage
+## Add-ons in this repository
 
-1. Install add-on from repository
-2. Configure Grocy URL and API key (optional)
-3. Start add-on
-4. Open Web UI
-5. Scan barcodes or enter manually
+### Barcode Buddy Python
 
-## Without Grocy
+Simple and clean Python implementation with USB scanner support and Grocy integration.
 
-The add-on works standalone without Grocy - just leave the Grocy fields empty. Scans will be logged but not sent to Grocy.
+**Features:**
+- ✅ USB Scanner Support
+- ✅ Grocy Integration
+- ✅ Modern Web UI
+- ✅ Manual Entry
+- ✅ Real-time Updates
 
-## Development
-
-Built with:
-- Python 3.11
-- Flask (Web Framework)
-- evdev (USB Scanner)
-- requests (Grocy API)
-
-## Version 2.0.0
-
-Complete rewrite in Python for better maintainability and extensibility.
+For detailed documentation, see the [add-on README](barcodebuddy/README.md).
