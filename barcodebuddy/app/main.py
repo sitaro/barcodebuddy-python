@@ -5,6 +5,7 @@ import sys
 from config import Config
 from grocy import GrocyClient
 from scanner import ScannerHandler
+from openfoodfacts import OpenFoodFactsClient
 from datetime import datetime
 
 # Setup logging
@@ -36,11 +37,14 @@ if config.has_grocy:
 else:
     logger.info("ℹ️  No Grocy configuration - running in standalone mode")
 
+# Initialize OpenFoodFacts client
+openfoodfacts_client = OpenFoodFactsClient()
+
 # Store recent scans
 recent_scans = []
 
 def handle_barcode(barcode: str):
-    """Handle scanned barcode."""
+    """Handle scanned barcode with automatic product creation."""
     logger.info(f"📦 Processing barcode: {barcode}")
 
     scan_result = {
@@ -51,9 +55,11 @@ def handle_barcode(barcode: str):
     }
 
     if grocy_client:
-        # Try to find product in Grocy
+        # Step 1: Try to find product in Grocy
         product = grocy_client.find_product_by_barcode(barcode)
+
         if product:
+            # Product exists in Grocy
             product_id = product.get('product_id')
             product_info = grocy_client.get_product_info(product_id)
 
@@ -68,11 +74,43 @@ def handle_barcode(barcode: str):
                     scan_result['status'] = 'error'
                     scan_result['message'] = f"❌ Failed to add: {product_name}"
             else:
-                scan_result['status'] = 'not_found'
-                scan_result['message'] = f"❓ Product not found in Grocy"
+                scan_result['status'] = 'error'
+                scan_result['message'] = f"❌ Error reading product info"
         else:
-            scan_result['status'] = 'not_found'
-            scan_result['message'] = f"❓ Barcode not found in Grocy"
+            # Step 2: Product not in Grocy - try OpenFoodFacts
+            logger.info(f"🔍 Product not in Grocy, checking OpenFoodFacts...")
+            off_product = openfoodfacts_client.lookup_barcode(barcode)
+
+            if off_product:
+                # Step 3: Found in OpenFoodFacts - create in Grocy
+                product_name = off_product['name']
+                description = f"{off_product.get('brand', '')} - {off_product.get('quantity', '')}".strip(' -')
+
+                logger.info(f"🆕 Creating new product: {product_name}")
+                product_id = grocy_client.create_product(product_name, description)
+
+                if product_id:
+                    # Step 4: Add barcode to new product
+                    if grocy_client.add_barcode_to_product(product_id, barcode):
+                        # Step 5: Add to stock
+                        if grocy_client.add_product(product_id):
+                            scan_result['status'] = 'success'
+                            scan_result['message'] = f"✅ Created & Added: {product_name}"
+                            logger.info(f"✅ Successfully created and added: {product_name}")
+                        else:
+                            scan_result['status'] = 'warning'
+                            scan_result['message'] = f"⚠️ Created {product_name}, but failed to add to stock"
+                    else:
+                        scan_result['status'] = 'warning'
+                        scan_result['message'] = f"⚠️ Created {product_name}, but failed to add barcode"
+                else:
+                    scan_result['status'] = 'error'
+                    scan_result['message'] = f"❌ Failed to create product in Grocy"
+            else:
+                # Not found anywhere
+                scan_result['status'] = 'not_found'
+                scan_result['message'] = f"❓ Barcode not found in Grocy or OpenFoodFacts"
+                logger.warning(f"❓ Barcode {barcode} not found in any database")
     else:
         scan_result['status'] = 'no_grocy'
         scan_result['message'] = f"📦 Scanned (no Grocy configured)"

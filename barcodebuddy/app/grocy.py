@@ -118,3 +118,40 @@ class GrocyClient:
     def get_product_info(self, product_id: int) -> Optional[Dict[Any, Any]]:
         """Get product information."""
         return self._request('GET', f'objects/products/{product_id}')
+
+    def create_product(self, name: str, description: str = "") -> Optional[int]:
+        """
+        Create a new product in Grocy.
+
+        Returns the product ID if successful, None otherwise.
+        """
+        data = {
+            'name': name,
+            'description': description,
+            'location_id': 1,  # Default location
+            'qu_id_purchase': 1,  # Default quantity unit (piece)
+            'qu_id_stock': 1,
+            'qu_factor_purchase_to_stock': 1
+        }
+        result = self._request('POST', 'objects/products', json=data)
+        if result and 'created_object_id' in result:
+            product_id = result['created_object_id']
+            logger.info(f"✅ Created product in Grocy: {name} (ID: {product_id})")
+            return product_id
+        return None
+
+    def add_barcode_to_product(self, product_id: int, barcode: str) -> bool:
+        """
+        Add a barcode to an existing product.
+
+        Returns True if successful, False otherwise.
+        """
+        data = {
+            'product_id': product_id,
+            'barcode': barcode
+        }
+        result = self._request('POST', 'objects/product_barcodes', json=data)
+        if result:
+            logger.info(f"✅ Added barcode {barcode} to product {product_id}")
+            return True
+        return False
