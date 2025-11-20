@@ -17,6 +17,26 @@ echo "🔍 Available scanner devices:"
 ls -la /dev/input/ 2>/dev/null || echo "No /dev/input devices"
 
 echo ""
+echo "📋 Device by-id:"
+ls -la /dev/input/by-id/ 2>/dev/null || echo "No by-id devices"
+
+echo ""
+echo "📋 Device by-path:"
+ls -la /dev/input/by-path/ 2>/dev/null || echo "No by-path devices"
+
+echo ""
+echo "🔍 Checking which devices are readable:"
+for dev in /dev/input/event*; do
+    if [ -e "$dev" ]; then
+        if timeout 0.1 cat "$dev" >/dev/null 2>&1; then
+            echo "  ✓ $dev - readable"
+        else
+            echo "  ✗ $dev - not readable"
+        fi
+    fi
+done
+
+echo ""
 echo "🔧 Fixing device permissions..."
 echo "Current user: $(whoami), UID: $(id -u), GID: $(id -g)"
 echo "Groups before: $(id -G)"
