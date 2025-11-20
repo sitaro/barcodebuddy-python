@@ -17,20 +17,31 @@ class GrocyClient:
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         }
+        # Use a session to persist cookies/connection
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
 
     def _request(self, method: str, endpoint: str, **kwargs) -> Optional[Dict[Any, Any]]:
         """Make API request."""
         url = f"{self.url}/api/{endpoint.lstrip('/')}"
         logger.debug(f"Grocy API call: {method} {url}")
         try:
-            response = requests.request(
+            # Don't follow redirects - API should respond directly
+            response = self.session.request(
                 method,
                 url,
-                headers=self.headers,
                 timeout=10,
+                allow_redirects=False,
                 **kwargs
             )
             logger.debug(f"Grocy response: Status {response.status_code}, Content-Type: {response.headers.get('Content-Type', 'unknown')}")
+
+            # Check for redirects (means auth failed)
+            if response.status_code in (301, 302, 303, 307, 308):
+                logger.error(f"Grocy returned redirect (status {response.status_code}) - API key may be invalid")
+                logger.error(f"Redirect location: {response.headers.get('Location', 'unknown')}")
+                return None
+
             response.raise_for_status()
 
             if not response.text:
