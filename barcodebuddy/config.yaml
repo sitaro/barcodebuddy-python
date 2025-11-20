@@ -18,6 +18,7 @@ devices:
 
 udev: true
 full_access: true
+apparmor: false
 
 ports:
   "5000/tcp": 5000
