@@ -9,6 +9,15 @@ import time
 
 logger = logging.getLogger(__name__)
 
+# Add input group (110) to process groups for device access
+try:
+    current_groups = os.getgroups()
+    if 110 not in current_groups:
+        os.setgroups(current_groups + [110])
+        logger.info(f"Added group 110 (input) to process groups: {os.getgroups()}")
+except Exception as e:
+    logger.warning(f"Could not add input group: {e}")
+
 
 class ScannerHandler:
     """Handle USB barcode scanner input."""
