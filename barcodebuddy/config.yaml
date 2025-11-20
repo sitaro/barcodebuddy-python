@@ -17,6 +17,7 @@ devices:
   - "/dev/input:/dev/input:rwm"
 
 udev: true
+full_access: true
 
 ports:
   "5000/tcp": 5000
