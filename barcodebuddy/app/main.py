@@ -43,8 +43,13 @@ openfoodfacts_client = OpenFoodFactsClient()
 # Store recent scans
 recent_scans = []
 
+# Current quantity for next product scan (reset after each product)
+current_quantity = 1.0
+
 def handle_barcode(barcode: str):
     """Handle scanned barcode with automatic product creation."""
+    global current_quantity
+
     logger.info(f"📦 Processing barcode: {barcode}")
 
     scan_result = {
@@ -54,6 +59,26 @@ def handle_barcode(barcode: str):
         'message': ''
     }
 
+    # Check if this is a quantity barcode (BBUDDY-Q-X)
+    if barcode.startswith('BBUDDY-Q-'):
+        try:
+            quantity_to_add = float(barcode.split('-')[2])
+            current_quantity += quantity_to_add
+            scan_result['status'] = 'quantity'
+            scan_result['message'] = f"🔢 Quantity set to: {current_quantity}"
+            logger.info(f"🔢 Quantity updated: {current_quantity} (added {quantity_to_add})")
+        except (IndexError, ValueError) as e:
+            scan_result['status'] = 'error'
+            scan_result['message'] = f"❌ Invalid quantity barcode format"
+            logger.error(f"Invalid quantity barcode: {barcode} - {e}")
+
+        # Store scan result and return
+        recent_scans.insert(0, scan_result)
+        if len(recent_scans) > 50:
+            recent_scans.pop()
+        return
+
+    # Regular product barcode handling
     if grocy_client:
         # Step 1: Try to find product in Grocy
         product = grocy_client.find_product_by_barcode(barcode)
@@ -65,11 +90,13 @@ def handle_barcode(barcode: str):
 
             if product_info:
                 product_name = product_info.get('name', 'Unknown')
-                # Add to stock
-                if grocy_client.add_product(product_id):
+                # Add to stock with current quantity
+                if grocy_client.add_product(product_id, current_quantity):
+                    quantity_text = f" ({current_quantity}x)" if current_quantity != 1 else ""
                     scan_result['status'] = 'success'
-                    scan_result['message'] = f"✅ Added: {product_name}"
-                    logger.info(f"✅ Added product: {product_name}")
+                    scan_result['message'] = f"✅ Added: {product_name}{quantity_text}"
+                    logger.info(f"✅ Added product: {product_name} (quantity: {current_quantity})")
+                    current_quantity = 1.0  # Reset after successful add
                 else:
                     scan_result['status'] = 'error'
                     scan_result['message'] = f"❌ Failed to add: {product_name}"
@@ -92,11 +119,13 @@ def handle_barcode(barcode: str):
                 if product_id:
                     # Step 4: Add barcode to new product
                     if grocy_client.add_barcode_to_product(product_id, barcode):
-                        # Step 5: Add to stock
-                        if grocy_client.add_product(product_id):
+                        # Step 5: Add to stock with current quantity
+                        if grocy_client.add_product(product_id, current_quantity):
+                            quantity_text = f" ({current_quantity}x)" if current_quantity != 1 else ""
                             scan_result['status'] = 'success'
-                            scan_result['message'] = f"✅ Created & Added: {product_name}"
-                            logger.info(f"✅ Successfully created and added: {product_name}")
+                            scan_result['message'] = f"✅ Created & Added: {product_name}{quantity_text}"
+                            logger.info(f"✅ Successfully created and added: {product_name} (quantity: {current_quantity})")
+                            current_quantity = 1.0  # Reset after successful add
                         else:
                             scan_result['status'] = 'warning'
                             scan_result['message'] = f"⚠️ Created {product_name}, but failed to add to stock"
