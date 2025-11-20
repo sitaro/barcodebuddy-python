@@ -1,15 +1,15 @@
-"""USB Scanner handler using hidraw."""
+"""USB Scanner handler using hidraw - Multi-device support."""
 import threading
 import logging
 import os
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 import time
 
 logger = logging.getLogger(__name__)
 
 
 class ScannerHandler:
-    """Handle USB barcode scanner input via hidraw."""
+    """Handle multiple USB barcode scanners via hidraw."""
 
     # HID Usage codes to characters mapping (US Keyboard layout)
     HID_TO_CHAR = {
@@ -24,73 +24,99 @@ class ScannerHandler:
     }
 
     def __init__(self, device_path: str, callback: Callable[[str], None]):
-        self.device_path = device_path
+        self.device_path = device_path  # Kept for compatibility, but not used
         self.callback = callback
         self.running = False
-        self.thread: Optional[threading.Thread] = None
-        self._barcode_buffer = ""
+        self.threads: List[threading.Thread] = []
+        self.active_devices: List[str] = []
+        self._barcode_buffers = {}  # One buffer per device
 
     def start(self):
-        """Start listening to scanner."""
+        """Start listening to all available scanners."""
         self.running = True
-        self.thread = threading.Thread(target=self._listen, daemon=True)
-        self.thread.start()
-        logger.info(f"Scanner started on {self.device_path}")
+
+        # Find all available scanner devices
+        devices = self._find_all_devices()
+
+        if not devices:
+            logger.warning("No scanner devices found, will retry...")
+            # Start a monitoring thread that looks for devices
+            monitor_thread = threading.Thread(target=self._monitor_devices, daemon=True)
+            monitor_thread.start()
+            self.threads.append(monitor_thread)
+        else:
+            # Start a thread for each device
+            for device in devices:
+                thread = threading.Thread(target=self._listen_device, args=(device,), daemon=True)
+                thread.start()
+                self.threads.append(thread)
+                self.active_devices.append(device)
+                logger.info(f"📱 Started scanner thread for: {device}")
+
+        logger.info(f"Scanner handler started (monitoring {len(self.active_devices)} devices)")
 
     def stop(self):
-        """Stop listening to scanner."""
+        """Stop listening to all scanners."""
         self.running = False
-        if self.thread:
-            self.thread.join(timeout=2)
+        for thread in self.threads:
+            thread.join(timeout=2)
         logger.info("Scanner stopped")
 
-    def _find_device(self) -> Optional[str]:
-        """Find scanner device - try hidraw first, then input events."""
-        # Try hidraw devices first (they work better!)
-        for i in range(10):
+    def _find_all_devices(self) -> List[str]:
+        """Find all accessible scanner devices."""
+        devices = []
+
+        # Try all hidraw devices
+        for i in range(20):  # Check up to 20 hidraw devices
             hidraw = f"/dev/hidraw{i}"
             if os.path.exists(hidraw):
                 try:
+                    # Test if we can open it
                     with open(hidraw, 'rb') as f:
-                        logger.info(f"Found accessible hidraw device: {hidraw}")
-                        return hidraw
-                except:
+                        devices.append(hidraw)
+                        logger.info(f"✅ Found accessible device: {hidraw}")
+                except Exception as e:
+                    logger.debug(f"Cannot access {hidraw}: {e}")
                     continue
 
-        # Fallback to specified device
-        if self.device_path and os.path.exists(self.device_path):
-            try:
-                with open(self.device_path, 'rb') as f:
-                    logger.info(f"Using specified device: {self.device_path}")
-                    return self.device_path
-            except PermissionError:
-                logger.warning(f"Permission denied for {self.device_path}")
-            except Exception as e:
-                logger.warning(f"Could not open {self.device_path}: {e}")
+        # Fallback: try input event devices if no hidraw found
+        if not devices:
+            for i in range(10):
+                event_dev = f"/dev/input/event{i}"
+                if os.path.exists(event_dev):
+                    try:
+                        with open(event_dev, 'rb') as f:
+                            devices.append(event_dev)
+                            logger.info(f"✅ Found accessible device: {event_dev}")
+                    except:
+                        continue
 
-        # Try input event devices
-        for i in range(10):
-            device = f"/dev/input/event{i}"
-            if os.path.exists(device):
-                try:
-                    with open(device, 'rb') as f:
-                        logger.info(f"Found accessible event device: {device}")
-                        return device
-                except:
-                    continue
+        return devices
 
-        logger.error("No accessible scanner device found")
-        return None
-
-    def _listen(self):
-        """Listen for scanner input."""
+    def _monitor_devices(self):
+        """Monitor for new scanner devices and start listening to them."""
+        logger.info("🔍 Device monitor started")
         while self.running:
-            device = self._find_device()
-            if not device:
-                logger.warning("Scanner not found, retrying in 5 seconds...")
-                time.sleep(5)
-                continue
+            # Check for new devices every 5 seconds
+            time.sleep(5)
 
+            current_devices = self._find_all_devices()
+
+            # Start threads for any new devices
+            for device in current_devices:
+                if device not in self.active_devices:
+                    logger.info(f"🆕 New device detected: {device}")
+                    thread = threading.Thread(target=self._listen_device, args=(device,), daemon=True)
+                    thread.start()
+                    self.threads.append(thread)
+                    self.active_devices.append(device)
+
+    def _listen_device(self, device: str):
+        """Listen to a specific device."""
+        logger.info(f"👂 Listening to: {device}")
+        self._barcode_buffers[device] = ""
+
+        while self.running:
             try:
                 is_hidraw = 'hidraw' in device
 
@@ -100,29 +126,29 @@ class ScannerHandler:
                     self._listen_input_event(device)
 
             except PermissionError:
-                logger.error(f"Permission denied accessing {device}")
-                time.sleep(5)
+                logger.error(f"❌ Permission denied: {device}")
+                break
             except Exception as e:
-                logger.error(f"Scanner error: {e}")
+                logger.error(f"❌ Error on {device}: {e}")
                 if self.running:
                     time.sleep(5)
 
+        # Remove from active devices when thread exits
+        if device in self.active_devices:
+            self.active_devices.remove(device)
+        logger.info(f"🛑 Stopped listening to: {device}")
+
     def _listen_hidraw(self, device: str):
         """Listen to HID raw device."""
-        logger.info(f"Listening to HID device: {device}")
-
         with open(device, 'rb') as f:
             while self.running:
                 try:
                     # Read HID report (8 bytes for keyboard)
                     data = f.read(8)
                     if len(data) < 8:
-                        continue
+                        break
 
                     # Parse HID keyboard report
-                    # Byte 0: Modifier keys
-                    # Byte 1: Reserved
-                    # Bytes 2-7: Key codes
                     modifier = data[0]
                     keys = data[2:8]
 
@@ -133,29 +159,28 @@ class ScannerHandler:
 
                         # Check for Enter (HID code 40)
                         if key_code == 40:
-                            if self._barcode_buffer:
-                                logger.info(f"Barcode scanned (HID): {self._barcode_buffer}")
-                                self.callback(self._barcode_buffer)
-                                self._barcode_buffer = ""
+                            if self._barcode_buffers[device]:
+                                barcode = self._barcode_buffers[device]
+                                logger.info(f"📦 Barcode from {device}: {barcode}")
+                                self.callback(barcode)
+                                self._barcode_buffers[device] = ""
                             continue
 
                         # Map HID code to character
                         if key_code in self.HID_TO_CHAR:
                             char = self.HID_TO_CHAR[key_code]
-                            self._barcode_buffer += char
-                            logger.debug(f"HID key: {key_code} -> {char}")
+                            self._barcode_buffers[device] += char
 
                 except Exception as e:
                     if self.running:
-                        logger.debug(f"HID read error: {e}")
+                        logger.debug(f"HID read error on {device}: {e}")
                     break
 
     def _listen_input_event(self, device: str):
         """Listen to Linux input event device."""
-        logger.info(f"Listening to input event device: {device}")
+        import struct
 
         with open(device, 'rb') as f:
-            # Event format: timestamp (16 bytes) + type (2) + code (2) + value (4)
             event_size = 24
 
             while self.running:
@@ -165,32 +190,36 @@ class ScannerHandler:
                         break
 
                     # Parse input event
-                    import struct
                     _, _, ev_type, code, value = struct.unpack('llHHI', data)
 
                     # EV_KEY = 1, key down = 1
                     if ev_type == 1 and value == 1:
-                        self._handle_input_keycode(code)
+                        self._handle_input_keycode(device, code)
 
                 except Exception as e:
                     if self.running:
-                        logger.debug(f"Input event read error: {e}")
+                        logger.debug(f"Input event read error on {device}: {e}")
                     break
 
-    def _handle_input_keycode(self, code: int):
+    def _handle_input_keycode(self, device: str, code: int):
         """Handle Linux input event keycode."""
         # Enter key (code 28)
         if code == 28:
-            if self._barcode_buffer:
-                logger.info(f"Barcode scanned (input): {self._barcode_buffer}")
-                self.callback(self._barcode_buffer)
-                self._barcode_buffer = ""
+            if self._barcode_buffers.get(device):
+                barcode = self._barcode_buffers[device]
+                logger.info(f"📦 Barcode from {device}: {barcode}")
+                self.callback(barcode)
+                self._barcode_buffers[device] = ""
             return
+
+        # Initialize buffer if needed
+        if device not in self._barcode_buffers:
+            self._barcode_buffers[device] = ""
 
         # Number keys (codes 2-11)
         if 2 <= code <= 11:
             num = str((code - 1) % 10)
-            self._barcode_buffer += num
+            self._barcode_buffers[device] += num
             return
 
         # Letter keys
@@ -202,4 +231,4 @@ class ScannerHandler:
         }
 
         if code in letter_map:
-            self._barcode_buffer += letter_map[code]
+            self._barcode_buffers[device] += letter_map[code]
