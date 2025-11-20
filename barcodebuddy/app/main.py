@@ -47,9 +47,12 @@ recent_scans = []
 # Starts at 0, defaults to 1 if no quantity barcode scanned
 current_quantity = 0.0
 
+# Current mode: 'add' or 'consume'
+current_mode = 'add'
+
 def handle_barcode(barcode: str):
     """Handle scanned barcode with automatic product creation."""
-    global current_quantity
+    global current_quantity, current_mode
 
     logger.info(f"📦 Processing barcode: {barcode}")
 
@@ -59,6 +62,28 @@ def handle_barcode(barcode: str):
         'status': 'unknown',
         'message': ''
     }
+
+    # Check if this is a mode switch barcode
+    if barcode == 'BBUDDY-ADD':
+        current_mode = 'add'
+        scan_result['status'] = 'mode'
+        scan_result['message'] = f"➕ Mode: ADD (adding to stock)"
+        logger.info(f"➕ Mode switched to: ADD")
+        # Store and return
+        recent_scans.insert(0, scan_result)
+        if len(recent_scans) > 50:
+            recent_scans.pop()
+        return
+    elif barcode == 'BBUDDY-CONSUME':
+        current_mode = 'consume'
+        scan_result['status'] = 'mode'
+        scan_result['message'] = f"➖ Mode: CONSUME (removing from stock)"
+        logger.info(f"➖ Mode switched to: CONSUME")
+        # Store and return
+        recent_scans.insert(0, scan_result)
+        if len(recent_scans) > 50:
+            recent_scans.pop()
+        return
 
     # Check if this is a quantity barcode (BBUDDY-Q-X)
     if barcode.startswith('BBUDDY-Q-'):
@@ -117,16 +142,26 @@ def handle_barcode(barcode: str):
                 product_name = product_info.get('name', 'Unknown')
                 # Use current quantity, or default to 1 if no quantity barcode was scanned
                 amount = current_quantity if current_quantity > 0 else 1.0
-                # Add to stock
-                if grocy_client.add_product(product_id, amount):
+
+                # Add or consume based on current mode
+                if current_mode == 'add':
+                    success = grocy_client.add_product(product_id, amount)
+                    action_emoji = "➕"
+                    action_text = "Added"
+                else:  # consume mode
+                    success = grocy_client.consume_product(product_id, amount)
+                    action_emoji = "➖"
+                    action_text = "Removed"
+
+                if success:
                     quantity_text = f" ({amount}x)" if amount != 1 else ""
                     scan_result['status'] = 'success'
-                    scan_result['message'] = f"✅ Added: {product_name}{quantity_text}"
-                    logger.info(f"✅ Added product: {product_name} (quantity: {amount})")
-                    current_quantity = 0.0  # Reset after successful add
+                    scan_result['message'] = f"{action_emoji} {action_text}: {product_name}{quantity_text}"
+                    logger.info(f"{action_emoji} {action_text} product: {product_name} (quantity: {amount})")
+                    current_quantity = 0.0  # Reset after successful operation
                 else:
                     scan_result['status'] = 'error'
-                    scan_result['message'] = f"❌ Failed to add: {product_name}"
+                    scan_result['message'] = f"❌ Failed to {action_text.lower()}: {product_name}"
             else:
                 scan_result['status'] = 'error'
                 scan_result['message'] = f"❌ Error reading product info"
@@ -146,17 +181,26 @@ def handle_barcode(barcode: str):
                 if product_id:
                     # Step 4: Add barcode to new product
                     if grocy_client.add_barcode_to_product(product_id, barcode):
-                        # Step 5: Add to stock with current quantity
+                        # Step 5: Add to stock with current quantity (only makes sense in add mode)
                         amount = current_quantity if current_quantity > 0 else 1.0
-                        if grocy_client.add_product(product_id, amount):
+
+                        if current_mode == 'add':
+                            success = grocy_client.add_product(product_id, amount)
+                            action_text = "Added"
+                        else:
+                            # Note: Consuming a just-created product is unusual, but supported
+                            success = grocy_client.consume_product(product_id, amount)
+                            action_text = "Removed"
+
+                        if success:
                             quantity_text = f" ({amount}x)" if amount != 1 else ""
                             scan_result['status'] = 'success'
-                            scan_result['message'] = f"✅ Created & Added: {product_name}{quantity_text}"
-                            logger.info(f"✅ Successfully created and added: {product_name} (quantity: {amount})")
-                            current_quantity = 0.0  # Reset after successful add
+                            scan_result['message'] = f"🆕 Created & {action_text}: {product_name}{quantity_text}"
+                            logger.info(f"🆕 Successfully created and {action_text.lower()}: {product_name} (quantity: {amount})")
+                            current_quantity = 0.0  # Reset after successful operation
                         else:
                             scan_result['status'] = 'warning'
-                            scan_result['message'] = f"⚠️ Created {product_name}, but failed to add to stock"
+                            scan_result['message'] = f"⚠️ Created {product_name}, but failed to {action_text.lower()}"
                     else:
                         scan_result['status'] = 'warning'
                         scan_result['message'] = f"⚠️ Created {product_name}, but failed to add barcode"

@@ -213,7 +213,8 @@
                         const emoji = scan.status === 'success' ? '✅' :
                                     scan.status === 'error' ? '❌' :
                                     scan.status === 'not_found' ? '❓' :
-                                    scan.status === 'quantity' ? '🔢' : '📦';
+                                    scan.status === 'quantity' ? '🔢' :
+                                    scan.status === 'mode' ? '🔄' : '📦';
 
                         return `
                             <div class="scan-item">
