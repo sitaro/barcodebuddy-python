@@ -49,9 +49,11 @@ class GrocyClient:
                     logger.error(f"Redirect location: {response.headers.get('Location', 'unknown')}")
                     return None
 
-            # Handle 400 Bad Request - might mean "not found" for barcode lookups
+            # Handle 400 Bad Request
             if response.status_code == 400:
-                logger.info(f"Grocy returned 400 (might be 'not found' for endpoint: {endpoint})")
+                error_text = response.text[:500] if response.text else "No error message"
+                logger.error(f"Grocy returned 400 for endpoint: {endpoint}")
+                logger.error(f"Response: {error_text}")
                 return None
 
             response.raise_for_status()
