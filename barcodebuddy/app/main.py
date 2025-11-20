@@ -64,7 +64,7 @@ def handle_barcode(barcode: str):
     }
 
     # Check if this is a mode switch barcode
-    if barcode == 'BBUDDY-ADD':
+    if barcode == config.barcode_add:
         current_mode = 'add'
         scan_result['status'] = 'mode'
         scan_result['message'] = f"➕ Mode: ADD (adding to stock)"
@@ -74,7 +74,7 @@ def handle_barcode(barcode: str):
         if len(recent_scans) > 50:
             recent_scans.pop()
         return
-    elif barcode == 'BBUDDY-CONSUME':
+    elif barcode == config.barcode_consume:
         current_mode = 'consume'
         scan_result['status'] = 'mode'
         scan_result['message'] = f"➖ Mode: CONSUME (removing from stock)"
@@ -85,10 +85,11 @@ def handle_barcode(barcode: str):
             recent_scans.pop()
         return
 
-    # Check if this is a quantity barcode (BBUDDY-Q-X)
-    if barcode.startswith('BBUDDY-Q-'):
+    # Check if this is a quantity barcode
+    if barcode.startswith(config.barcode_quantity_prefix):
         try:
-            quantity_to_add = float(barcode.split('-')[2])
+            quantity_str = barcode[len(config.barcode_quantity_prefix):]
+            quantity_to_add = float(quantity_str)
             current_quantity += quantity_to_add
             scan_result['status'] = 'quantity'
             scan_result['message'] = f"🔢 Quantity set to: {current_quantity}"

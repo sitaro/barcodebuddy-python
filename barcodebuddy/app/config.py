@@ -44,3 +44,18 @@ class Config:
     def has_grocy(self) -> bool:
         """Check if Grocy is configured."""
         return self.grocy_url is not None and self.grocy_api_key is not None
+
+    @property
+    def barcode_add(self) -> str:
+        """Get ADD mode barcode."""
+        return self._config.get('barcode_add', 'BBUDDY-ADD')
+
+    @property
+    def barcode_consume(self) -> str:
+        """Get CONSUME mode barcode."""
+        return self._config.get('barcode_consume', 'BBUDDY-CONSUME')
+
+    @property
+    def barcode_quantity_prefix(self) -> str:
+        """Get quantity barcode prefix."""
+        return self._config.get('barcode_quantity_prefix', 'BBUDDY-Q-')

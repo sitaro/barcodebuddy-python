@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python)"
-version: "2.5.0"
+version: "2.6.0"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -43,9 +43,15 @@ options:
   grocy_url: ""
   grocy_api_key: ""
   debug: false
+  barcode_add: "BBUDDY-ADD"
+  barcode_consume: "BBUDDY-CONSUME"
+  barcode_quantity_prefix: "BBUDDY-Q-"
 
 schema:
   scanner_device: str
   grocy_url: str
   grocy_api_key: str
   debug: bool
+  barcode_add: str
+  barcode_consume: str
+  barcode_quantity_prefix: str
