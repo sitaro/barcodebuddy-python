@@ -15,6 +15,7 @@ init: false
 # USB-Scanner Zugriff
 devices:
   - "/dev/input:/dev/input:rwm"
+  - "/dev/hidraw0:/dev/hidraw0:rwm"
 
 udev: true
 full_access: true
