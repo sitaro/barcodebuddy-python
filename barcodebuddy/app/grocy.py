@@ -58,7 +58,18 @@ class GrocyClient:
             return None
 
     def test_connection(self) -> bool:
-        """Test Grocy connection."""
+        """Test Grocy connection with retry logic."""
+        import time
+
+        # First attempt
+        result = self._request('GET', 'system/info')
+        if result is not None:
+            return True
+
+        # If first attempt failed with redirect, wait and retry
+        logger.info("First connection attempt failed, retrying in 2 seconds...")
+        time.sleep(2)
+
         result = self._request('GET', 'system/info')
         return result is not None
 
