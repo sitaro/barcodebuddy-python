@@ -10,8 +10,7 @@ LABEL \
 RUN apk add --no-cache \
     gcc \
     musl-dev \
-    linux-headers \
-    libevdev-dev
+    linux-headers
 
 # Set working directory
 WORKDIR /app

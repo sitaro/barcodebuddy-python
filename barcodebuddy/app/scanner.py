@@ -1,7 +1,9 @@
-"""USB Scanner handler using evdev."""
-import evdev
+"""USB Scanner handler using subprocess."""
+import subprocess
 import threading
 import logging
+import struct
+import os
 from typing import Callable, Optional
 import time
 
@@ -14,7 +16,6 @@ class ScannerHandler:
     def __init__(self, device_path: str, callback: Callable[[str], None]):
         self.device_path = device_path
         self.callback = callback
-        self.device: Optional[evdev.InputDevice] = None
         self.running = False
         self.thread: Optional[threading.Thread] = None
         self._barcode_buffer = ""
@@ -33,86 +34,100 @@ class ScannerHandler:
             self.thread.join(timeout=2)
         logger.info("Scanner stopped")
 
-    def _find_device(self) -> Optional[evdev.InputDevice]:
-        """Find and open scanner device."""
-        try:
-            # Try specified device first
-            if self.device_path:
+    def _find_device(self) -> Optional[str]:
+        """Find scanner device."""
+        # Try specified device first
+        if self.device_path and os.path.exists(self.device_path):
+            try:
+                # Test if we can read from device
+                with open(self.device_path, 'rb') as f:
+                    logger.info(f"Using scanner device: {self.device_path}")
+                    return self.device_path
+            except PermissionError as e:
+                logger.warning(f"Permission denied for {self.device_path}: {e}")
+            except Exception as e:
+                logger.warning(f"Could not open {self.device_path}: {e}")
+
+        # Auto-detect: try common event devices
+        for i in range(10):
+            device = f"/dev/input/event{i}"
+            if os.path.exists(device):
                 try:
-                    device = evdev.InputDevice(self.device_path)
-                    logger.info(f"Using scanner device: {device.name} ({self.device_path})")
-                    return device
-                except (FileNotFoundError, PermissionError) as e:
-                    logger.warning(f"Could not open {self.device_path}: {e}")
+                    with open(device, 'rb') as f:
+                        logger.info(f"Auto-detected scanner: {device}")
+                        return device
+                except:
+                    continue
 
-            # Auto-detect: find first keyboard-like device
-            devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-            for device in devices:
-                if 'keyboard' in device.name.lower() or 'barcode' in device.name.lower():
-                    logger.info(f"Auto-detected scanner: {device.name} ({device.path})")
-                    return device
-
-            logger.error("No scanner device found")
-            return None
-        except Exception as e:
-            logger.error(f"Error finding scanner device: {e}")
-            return None
+        logger.error("No scanner device found")
+        return None
 
     def _listen(self):
-        """Listen for scanner input."""
+        """Listen for scanner input using raw device read."""
         while self.running:
+            device = self._find_device()
+            if not device:
+                logger.warning("Scanner not found, retrying in 5 seconds...")
+                time.sleep(5)
+                continue
+
             try:
-                if not self.device:
-                    self.device = self._find_device()
-                    if not self.device:
-                        logger.warning("Scanner not found, retrying in 5 seconds...")
-                        time.sleep(5)
-                        continue
+                # Open device for reading
+                with open(device, 'rb') as f:
+                    logger.info(f"Listening to scanner on {device}")
 
-                # Read events from device
-                for event in self.device.read_loop():
-                    if not self.running:
-                        break
+                    # Event format: timestamp (8 bytes) + type (2) + code (2) + value (4)
+                    event_size = 24
 
-                    if event.type == evdev.ecodes.EV_KEY:
-                        key_event = evdev.categorize(event)
-                        if key_event.keystate == key_event.key_down:
-                            self._handle_key(key_event.keycode)
+                    while self.running:
+                        try:
+                            data = f.read(event_size)
+                            if len(data) < event_size:
+                                break
 
-            except (OSError, IOError) as e:
-                logger.error(f"Scanner error: {e}")
-                self.device = None
-                if self.running:
-                    time.sleep(5)
+                            # Parse event (struct format: llHHI for 64-bit)
+                            _, _, ev_type, code, value = struct.unpack('llHHI', data)
+
+                            # EV_KEY = 1, key down = 1
+                            if ev_type == 1 and value == 1:
+                                self._handle_keycode(code)
+
+                        except Exception as e:
+                            if self.running:
+                                logger.debug(f"Read error: {e}")
+                            break
+
+            except PermissionError:
+                logger.error(f"Permission denied accessing {device}")
+                time.sleep(5)
             except Exception as e:
-                logger.error(f"Unexpected scanner error: {e}")
+                logger.error(f"Scanner error: {e}")
                 if self.running:
                     time.sleep(5)
 
-    def _handle_key(self, keycode: str):
-        """Handle keyboard input from scanner."""
-        # Enter key - barcode complete
-        if keycode in ['KEY_ENTER', 'KEY_KPENTER']:
+    def _handle_keycode(self, code: int):
+        """Handle keyboard input code from scanner."""
+        # Enter key (code 28) - barcode complete
+        if code == 28:
             if self._barcode_buffer:
                 logger.info(f"Barcode scanned: {self._barcode_buffer}")
                 self.callback(self._barcode_buffer)
                 self._barcode_buffer = ""
             return
 
-        # Convert keycode to character
-        key_map = {
-            'KEY_0': '0', 'KEY_1': '1', 'KEY_2': '2', 'KEY_3': '3',
-            'KEY_4': '4', 'KEY_5': '5', 'KEY_6': '6', 'KEY_7': '7',
-            'KEY_8': '8', 'KEY_9': '9',
-            'KEY_A': 'A', 'KEY_B': 'B', 'KEY_C': 'C', 'KEY_D': 'D',
-            'KEY_E': 'E', 'KEY_F': 'F', 'KEY_G': 'G', 'KEY_H': 'H',
-            'KEY_I': 'I', 'KEY_J': 'J', 'KEY_K': 'K', 'KEY_L': 'L',
-            'KEY_M': 'M', 'KEY_N': 'N', 'KEY_O': 'O', 'KEY_P': 'P',
-            'KEY_Q': 'Q', 'KEY_R': 'R', 'KEY_S': 'S', 'KEY_T': 'T',
-            'KEY_U': 'U', 'KEY_V': 'V', 'KEY_W': 'W', 'KEY_X': 'X',
-            'KEY_Y': 'Y', 'KEY_Z': 'Z',
-            'KEY_MINUS': '-', 'KEY_EQUAL': '=',
+        # Number keys (codes 2-11 for 1-9, 0)
+        if 2 <= code <= 11:
+            num = str((code - 1) % 10)
+            self._barcode_buffer += num
+            return
+
+        # Letter keys (codes 16-25 for Q-P, 30-38 for A-L, 44-50 for Z-M)
+        letter_map = {
+            16: 'Q', 17: 'W', 18: 'E', 19: 'R', 20: 'T', 21: 'Y', 22: 'U', 23: 'I', 24: 'O', 25: 'P',
+            30: 'A', 31: 'S', 32: 'D', 33: 'F', 34: 'G', 35: 'H', 36: 'J', 37: 'K', 38: 'L',
+            44: 'Z', 45: 'X', 46: 'C', 47: 'V', 48: 'B', 49: 'N', 50: 'M',
+            12: '-', 13: '=',
         }
 
-        if keycode in key_map:
-            self._barcode_buffer += key_map[keycode]
+        if code in letter_map:
+            self._barcode_buffer += letter_map[code]
