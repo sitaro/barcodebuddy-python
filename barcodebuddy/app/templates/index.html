@@ -181,7 +181,7 @@
 
             if (!barcode) return;
 
-            fetch('/api/scan', {
+            fetch('api/scan', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({barcode: barcode})
@@ -198,7 +198,7 @@
         }
 
         function loadScans() {
-            fetch('/api/scans')
+            fetch('api/scans')
                 .then(response => response.json())
                 .then(scans => {
                     const list = document.getElementById('scan-list');
