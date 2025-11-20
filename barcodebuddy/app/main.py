@@ -44,7 +44,8 @@ openfoodfacts_client = OpenFoodFactsClient()
 recent_scans = []
 
 # Current quantity for next product scan (reset after each product)
-current_quantity = 1.0
+# Starts at 0, defaults to 1 if no quantity barcode scanned
+current_quantity = 0.0
 
 def handle_barcode(barcode: str):
     """Handle scanned barcode with automatic product creation."""
@@ -114,13 +115,15 @@ def handle_barcode(barcode: str):
 
             if product_info:
                 product_name = product_info.get('name', 'Unknown')
-                # Add to stock with current quantity
-                if grocy_client.add_product(product_id, current_quantity):
-                    quantity_text = f" ({current_quantity}x)" if current_quantity != 1 else ""
+                # Use current quantity, or default to 1 if no quantity barcode was scanned
+                amount = current_quantity if current_quantity > 0 else 1.0
+                # Add to stock
+                if grocy_client.add_product(product_id, amount):
+                    quantity_text = f" ({amount}x)" if amount != 1 else ""
                     scan_result['status'] = 'success'
                     scan_result['message'] = f"✅ Added: {product_name}{quantity_text}"
-                    logger.info(f"✅ Added product: {product_name} (quantity: {current_quantity})")
-                    current_quantity = 1.0  # Reset after successful add
+                    logger.info(f"✅ Added product: {product_name} (quantity: {amount})")
+                    current_quantity = 0.0  # Reset after successful add
                 else:
                     scan_result['status'] = 'error'
                     scan_result['message'] = f"❌ Failed to add: {product_name}"
@@ -144,12 +147,13 @@ def handle_barcode(barcode: str):
                     # Step 4: Add barcode to new product
                     if grocy_client.add_barcode_to_product(product_id, barcode):
                         # Step 5: Add to stock with current quantity
-                        if grocy_client.add_product(product_id, current_quantity):
-                            quantity_text = f" ({current_quantity}x)" if current_quantity != 1 else ""
+                        amount = current_quantity if current_quantity > 0 else 1.0
+                        if grocy_client.add_product(product_id, amount):
+                            quantity_text = f" ({amount}x)" if amount != 1 else ""
                             scan_result['status'] = 'success'
                             scan_result['message'] = f"✅ Created & Added: {product_name}{quantity_text}"
-                            logger.info(f"✅ Successfully created and added: {product_name} (quantity: {current_quantity})")
-                            current_quantity = 1.0  # Reset after successful add
+                            logger.info(f"✅ Successfully created and added: {product_name} (quantity: {amount})")
+                            current_quantity = 0.0  # Reset after successful add
                         else:
                             scan_result['status'] = 'warning'
                             scan_result['message'] = f"⚠️ Created {product_name}, but failed to add to stock"
