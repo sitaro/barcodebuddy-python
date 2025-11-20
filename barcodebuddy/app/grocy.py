@@ -121,16 +121,41 @@ class GrocyClient:
         """Get product information."""
         return self._request('GET', f'objects/products/{product_id}')
 
+    def get_default_location_id(self) -> int:
+        """Get the first available location ID from Grocy."""
+        result = self._request('GET', 'objects/locations')
+        if result and len(result) > 0:
+            location_id = result[0].get('id', 1)
+            logger.debug(f"Using location ID: {location_id}")
+            return location_id
+        return 1  # Fallback to 1
+
+    def get_default_quantity_unit_id(self) -> int:
+        """Get the first available quantity unit ID from Grocy."""
+        result = self._request('GET', 'objects/quantity_units')
+        if result and len(result) > 0:
+            qu_id = result[0].get('id', 1)
+            logger.debug(f"Using quantity unit ID: {qu_id}")
+            return qu_id
+        return 1  # Fallback to 1
+
     def create_product(self, name: str, description: str = "") -> Optional[int]:
         """
         Create a new product in Grocy.
 
         Returns the product ID if successful, None otherwise.
         """
-        # Minimal required fields - compatible with all Grocy versions
+        # Get default IDs from Grocy
+        location_id = self.get_default_location_id()
+        qu_id = self.get_default_quantity_unit_id()
+
+        # Required fields for product creation
         data = {
             'name': name,
-            'description': description
+            'description': description,
+            'location_id': location_id,
+            'qu_id_purchase': qu_id,
+            'qu_id_stock': qu_id
         }
         result = self._request('POST', 'objects/products', json=data)
         if result and 'created_object_id' in result:
