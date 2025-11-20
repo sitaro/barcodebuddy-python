@@ -49,6 +49,11 @@ class GrocyClient:
                     logger.error(f"Redirect location: {response.headers.get('Location', 'unknown')}")
                     return None
 
+            # Handle 400 Bad Request - might mean "not found" for barcode lookups
+            if response.status_code == 400:
+                logger.info(f"Grocy returned 400 (might be 'not found' for endpoint: {endpoint})")
+                return None
+
             response.raise_for_status()
 
             if not response.text:
@@ -59,6 +64,13 @@ class GrocyClient:
         except requests.exceptions.JSONDecodeError as e:
             logger.error(f"Grocy API returned invalid JSON: {e}")
             logger.error(f"Response text: {response.text[:200]}")  # First 200 chars
+            return None
+        except requests.exceptions.HTTPError as e:
+            # 404 means not found, which is expected for unknown barcodes
+            if e.response.status_code == 404:
+                logger.info(f"Grocy returned 404 (not found) for: {endpoint}")
+            else:
+                logger.error(f"Grocy API HTTP error: {e}")
             return None
         except requests.exceptions.RequestException as e:
             logger.error(f"Grocy API request failed: {e}")

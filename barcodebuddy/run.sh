@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Starting Barcode Buddy (Python) v2.2.4"
+echo "🚀 Starting Barcode Buddy (Python) v2.2.5"
 echo "==========================================="
 
 # Show configuration
