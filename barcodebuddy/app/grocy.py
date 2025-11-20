@@ -21,8 +21,9 @@ class GrocyClient:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
-    def _request(self, method: str, endpoint: str, **kwargs) -> Optional[Dict[Any, Any]]:
-        """Make API request."""
+    def _request(self, method: str, endpoint: str, retry: bool = True, **kwargs) -> Optional[Dict[Any, Any]]:
+        """Make API request with automatic retry on redirect."""
+        import time
         url = f"{self.url}/api/{endpoint.lstrip('/')}"
         logger.debug(f"Grocy API call: {method} {url}")
         try:
@@ -36,11 +37,17 @@ class GrocyClient:
             )
             logger.debug(f"Grocy response: Status {response.status_code}, Content-Type: {response.headers.get('Content-Type', 'unknown')}")
 
-            # Check for redirects (means auth failed)
+            # Check for redirects (means auth failed or session issue)
             if response.status_code in (301, 302, 303, 307, 308):
-                logger.error(f"Grocy returned redirect (status {response.status_code}) - API key may be invalid")
-                logger.error(f"Redirect location: {response.headers.get('Location', 'unknown')}")
-                return None
+                if retry:
+                    logger.warning(f"Grocy redirect detected, retrying in 1 second...")
+                    time.sleep(1)
+                    # Retry without further retries to avoid infinite loop
+                    return self._request(method, endpoint, retry=False, **kwargs)
+                else:
+                    logger.error(f"Grocy returned redirect (status {response.status_code}) - API key may be invalid")
+                    logger.error(f"Redirect location: {response.headers.get('Location', 'unknown')}")
+                    return None
 
             response.raise_for_status()
 
