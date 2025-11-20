@@ -174,18 +174,8 @@
     </div>
 
     <script>
-        // Auto-refresh scans every 2 seconds
-        setInterval(loadScans, 2000);
-        loadScans();
-
-        // Handle Enter key in input
-        document.getElementById('barcode-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitBarcode();
-            }
-        });
-
         function submitBarcode() {
+            console.log('submitBarcode called');
             const input = document.getElementById('barcode-input');
             const barcode = input.value.trim();
 
@@ -198,11 +188,13 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Response:', data);
                 if (data.success) {
                     input.value = '';
                     loadScans();
                 }
-            });
+            })
+            .catch(error => console.error('Fetch error:', error));
         }
 
         function loadScans() {
@@ -235,8 +227,27 @@
                             </div>
                         `;
                     }).join('');
-                });
+                })
+                .catch(error => console.error('Load scans error:', error));
         }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+
+            // Handle Enter key in input
+            document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitBarcode();
+                }
+            });
+
+            // Auto-refresh scans every 2 seconds
+            setInterval(loadScans, 2000);
+            loadScans();
+
+            console.log('submitBarcode function available:', typeof submitBarcode);
+        });
     </script>
 </body>
 </html>
