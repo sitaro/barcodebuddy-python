@@ -73,3 +73,12 @@ class Config:
         if lang in ['en', 'de', 'fr', 'es']:
             return lang
         return 'en'  # Default fallback
+
+    @property
+    def barcode_format(self) -> str:
+        """Get barcode format for PDF generation."""
+        fmt = self._config.get('barcode_format', 'code128').strip().lower()
+        # Validate format
+        if fmt in ['code128', 'qr']:
+            return fmt
+        return 'code128'  # Default fallback

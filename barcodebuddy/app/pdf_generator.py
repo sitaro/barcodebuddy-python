@@ -3,13 +3,29 @@ import io
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from reportlab.graphics.barcode import code128
+from reportlab.graphics.barcode import code128, qr
 from reportlab.graphics import renderPDF
 from reportlab.graphics.shapes import Drawing
 
 
-def generate_quantity_barcodes_pdf():
-    """Generate a PDF with quantity barcodes (1-9, 10, 20, 30)."""
+def _create_barcode(barcode_text, barcode_format='code128'):
+    """Create a barcode object based on the specified format."""
+    if barcode_format == 'qr':
+        # QR code
+        return qr.QrCodeWidget(barcode_text)
+    else:
+        # Code128 (default)
+        return code128.Code128(
+            barcode_text,
+            barWidth=1.2,
+            barHeight=50,
+            humanReadable=True,
+            fontSize=10
+        )
+
+
+def generate_quantity_barcodes_pdf(barcode_format='code128'):
+    """Generate a PDF with quantity barcodes (3-10, 20, 30)."""
     # Create PDF buffer
     buffer = io.BytesIO()
 
@@ -19,7 +35,8 @@ def generate_quantity_barcodes_pdf():
 
     # Title
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, height - 50, "Barcode Buddy - Control Barcodes")
+    format_name = "QR Codes" if barcode_format == 'qr' else "Code128 Barcodes"
+    c.drawString(50, height - 50, f"Barcode Buddy - Control {format_name}")
 
     c.setFont("Helvetica", 12)
     c.drawString(50, height - 70, "Scan these barcodes to control Barcode Buddy")
@@ -27,7 +44,7 @@ def generate_quantity_barcodes_pdf():
     # Layout settings
     left_margin = 50
     right_column_x = width / 2 + 20
-    barcode_height = 50
+    barcode_height = 50 if barcode_format == 'code128' else 70  # QR codes need more space
 
     # Section 1: Mode Barcodes (ADD/CONSUME)
     c.setFont("Helvetica-Bold", 16)
@@ -40,14 +57,16 @@ def generate_quantity_barcodes_pdf():
         c.setFont("Helvetica-Bold", 14)
         c.drawString(left_margin, mode_y + 10, "➕ ADD Mode")
 
-        barcode_obj = code128.Code128(
-            "BBUDDY-ADD",
-            barWidth=1.2,
-            barHeight=barcode_height,
-            humanReadable=True,
-            fontSize=10
-        )
-        barcode_obj.drawOn(c, left_margin, mode_y - barcode_height - 5)
+        barcode_obj = _create_barcode("BBUDDY-ADD", barcode_format)
+
+        if barcode_format == 'qr':
+            # Draw QR code using Drawing
+            d = Drawing(70, 70)
+            d.add(barcode_obj)
+            d.drawOn(c, left_margin, mode_y - barcode_height - 5)
+        else:
+            barcode_obj.drawOn(c, left_margin, mode_y - barcode_height - 5)
+
     except Exception as e:
         c.setFont("Helvetica", 8)
         c.drawString(left_margin, mode_y, f"Error: {str(e)[:50]}")
@@ -57,14 +76,16 @@ def generate_quantity_barcodes_pdf():
         c.setFont("Helvetica-Bold", 14)
         c.drawString(right_column_x, mode_y + 10, "➖ CONSUME Mode")
 
-        barcode_obj = code128.Code128(
-            "BBUDDY-CONSUME",
-            barWidth=1.2,
-            barHeight=barcode_height,
-            humanReadable=True,
-            fontSize=10
-        )
-        barcode_obj.drawOn(c, right_column_x, mode_y - barcode_height - 5)
+        barcode_obj = _create_barcode("BBUDDY-CONSUME", barcode_format)
+
+        if barcode_format == 'qr':
+            # Draw QR code using Drawing
+            d = Drawing(70, 70)
+            d.add(barcode_obj)
+            d.drawOn(c, right_column_x, mode_y - barcode_height - 5)
+        else:
+            barcode_obj.drawOn(c, right_column_x, mode_y - barcode_height - 5)
+
     except Exception as e:
         c.setFont("Helvetica", 8)
         c.drawString(right_column_x, mode_y, f"Error: {str(e)[:50]}")
@@ -78,7 +99,7 @@ def generate_quantity_barcodes_pdf():
 
     # Layout settings for quantities
     start_y = mode_y - 130
-    spacing = 90
+    spacing = 100 if barcode_format == 'qr' else 90  # QR codes need more spacing
 
     # Generate barcodes
     for idx, qty in enumerate(quantities):
@@ -96,17 +117,16 @@ def generate_quantity_barcodes_pdf():
             c.setFont("Helvetica-Bold", 14)
             c.drawString(x_pos, y_pos + 10, f"Quantity: {qty}")
 
-            # Create Code128 barcode using reportlab
-            barcode_obj = code128.Code128(
-                barcode_text,
-                barWidth=1.2,
-                barHeight=barcode_height,
-                humanReadable=True,
-                fontSize=10
-            )
+            # Create barcode
+            barcode_obj = _create_barcode(barcode_text, barcode_format)
 
             # Draw barcode
-            barcode_obj.drawOn(c, x_pos, y_pos - barcode_height - 5)
+            if barcode_format == 'qr':
+                d = Drawing(70, 70)
+                d.add(barcode_obj)
+                d.drawOn(c, x_pos, y_pos - barcode_height - 5)
+            else:
+                barcode_obj.drawOn(c, x_pos, y_pos - barcode_height - 5)
 
         except Exception as e:
             # Fallback: just draw text if barcode generation fails
@@ -117,7 +137,7 @@ def generate_quantity_barcodes_pdf():
 
     # Footer
     c.setFont("Helvetica-Oblique", 10)
-    c.drawString(50, 30, "Generated by Barcode Buddy (Python)")
+    c.drawString(50, 30, f"Generated by Barcode Buddy (Python) - Format: {format_name}")
 
     # Save PDF
     c.save()

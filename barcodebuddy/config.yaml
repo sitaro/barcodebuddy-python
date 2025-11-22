@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python) (beta)"
-version: "2.12.6-beta"
+version: "2.13.0-beta"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -50,6 +50,9 @@ options:
   # Language
   language: "en"
 
+  # Barcode Format for PDF
+  barcode_format: "code128"
+
   # Debug Mode
   debug: false
 
@@ -69,6 +72,9 @@ schema:
 
   # Language (en/de/fr/es)
   language: str
+
+  # Barcode Format (code128/qr)
+  barcode_format: str
 
   # Debug Mode
   debug: bool
