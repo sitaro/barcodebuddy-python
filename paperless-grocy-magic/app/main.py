@@ -331,26 +331,26 @@ Datum: 22.11.2025</textarea>
                 output += `  ❌ Failed: ${data.failed || 0}\n\n`;
 
                 if (data.results && data.results.length > 0) {
-                    output += '📋 Results:\n';
-                    output += '─'.repeat(60) + '\n';
+                    output += `📋 Results:\\n`;
+                    output += `${'─'.repeat(60)}\\n`;
                     data.results.forEach((r, i) => {
-                        output += `${i+1}. Document ${r.document_id}: ${r.title}\n`;
+                        output += `${i+1}. Document ${r.document_id}: ${r.title}\\n`;
                         if (r.success) {
-                            output += `   ✅ Success - Updated: ${r.updated || 0}, Created: ${r.created || 0}\n`;
+                            output += `   ✅ Success - Updated: ${r.updated || 0}, Created: ${r.created || 0}\\n`;
                         } else {
-                            output += `   ❌ Failed: ${r.error}\n`;
+                            output += `   ❌ Failed: ${r.error}\\n`;
                         }
                         if (r.warning) {
-                            output += `   ⚠️  ${r.warning}\n`;
+                            output += `   ⚠️  ${r.warning}\\n`;
                         }
-                        output += '\n';
+                        output += `\\n`;
                     });
                 } else if (data.message) {
-                    output += `\n${data.message}\n`;
+                    output += `\\n${data.message}\\n`;
                 }
 
-                output += '─'.repeat(60) + '\n';
-                output += 'Raw JSON:\n' + JSON.stringify(data, null, 2);
+                output += `${'─'.repeat(60)}\\n`;
+                output += `Raw JSON:\\n` + JSON.stringify(data, null, 2);
 
                 resultDiv.innerHTML = output;
             })
