@@ -259,9 +259,10 @@
 
         function loadScans() {
             // Don't refresh if user is typing in a product name input
+            // BUT allow refresh if input is disabled (creating in progress or done)
             const productInputs = document.querySelectorAll('[id^="product-name-"]');
             for (let input of productInputs) {
-                if (input === document.activeElement || input.value.trim() !== '') {
+                if (!input.disabled && (input === document.activeElement || input.value.trim() !== '')) {
                     console.log('Skipping refresh - user is entering product name');
                     return;
                 }
