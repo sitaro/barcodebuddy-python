@@ -5,6 +5,16 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2025-11-22
+
+### Added
+- **PDF Barcode Generator**: Download printable control barcodes as PDF
+- Mode control barcodes: ADD and CONSUME (BBUDDY-ADD, BBUDDY-CONSUME)
+- Quantity control barcodes: 3-10, 20, 30 (BBUDDY-Q-X)
+- PDF opens in new browser tab for easy printing
+- Code128 barcode format using reportlab's built-in support
+- Multi-language support for PDF download button (en/de/fr/es)
+
 ## [2.9.0] - 2025-11-22
 
 ### Added
@@ -147,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Feature |
 |---------|------|-------------|
+| 2.10.0 | 2025-11-22 | PDF Barcode Generator |
 | 2.9.0 | 2025-11-22 | Multi-Language Support |
 | 2.8.0 | 2025-11-22 | Product Creation UI & Mode Switching |
 | 2.6.0 | 2025-11-22 | Stable Release |
