@@ -351,6 +351,25 @@ def set_language(lang):
         return jsonify({'success': True, 'language': lang})
     return jsonify({'success': False, 'error': 'Unsupported language'}), 400
 
+@app.route('/api/debug-language')
+def debug_language():
+    """Debug language detection."""
+    import os
+    supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+    ha_lang_result = get_ha_language()
+    current_locale_result = get_locale()
+
+    debug_info = {
+        'supervisor_token_present': bool(supervisor_token),
+        'supervisor_token_length': len(supervisor_token) if supervisor_token else 0,
+        'config_language': config.language,
+        'session_language': session.get('language'),
+        'ha_detected_language': ha_lang_result,
+        'current_locale': current_locale_result,
+        'browser_accept_language': request.accept_languages.best_match(['en', 'de', 'fr', 'es'])
+    }
+    return jsonify(debug_info)
+
 @app.route('/api/create-product', methods=['POST'])
 def create_product():
     """Create a new product with barcode and add to stock."""
