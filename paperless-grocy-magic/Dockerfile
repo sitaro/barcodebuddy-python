@@ -1,16 +1,21 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install Python and dependencies
+# Install system dependencies and Python packages
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     py3-flask \
+    jq \
+    gcc \
+    musl-dev \
+    python3-dev \
     && pip3 install --no-cache-dir \
         requests \
         python-dateutil \
         fuzzywuzzy \
-        python-Levenshtein
+        python-Levenshtein \
+    && apk del gcc musl-dev python3-dev
 
 # Copy application files
 COPY run.sh /
