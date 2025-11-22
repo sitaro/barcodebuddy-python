@@ -5,6 +5,13 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2-beta] - 2025-11-22
+
+### Fixed
+- **Flask installation** - Changed from `py3-flask` (Alpine package) to `pip install flask`
+- All Python packages now installed via pip for better compatibility
+- Added `--break-system-packages` flag for pip3 in Alpine
+
 ## [0.2.1-beta] - 2025-11-22
 
 ### Fixed

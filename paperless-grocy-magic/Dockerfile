@@ -5,12 +5,12 @@ FROM $BUILD_FROM
 RUN apk add --no-cache \
     python3 \
     py3-pip \
-    py3-flask \
     jq \
     gcc \
     musl-dev \
     python3-dev \
-    && pip3 install --no-cache-dir \
+    && pip3 install --no-cache-dir --break-system-packages \
+        flask \
         requests \
         python-dateutil \
         fuzzywuzzy \
