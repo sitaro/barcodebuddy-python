@@ -24,16 +24,24 @@ price_updater = None
 
 if config.grocy_url and config.grocy_api_key:
     try:
+        logger.info(f"Initializing Grocy client with URL: {config.grocy_url}")
         grocy_client = GrocyClient(config.grocy_url, config.grocy_api_key)
+
+        logger.info("Testing Grocy connection...")
         if grocy_client.test_connection():
+            logger.info("Grocy connection successful, creating PriceUpdateService...")
             price_updater = PriceUpdateService(grocy_client, config.fuzzy_match_threshold)
             logger.info("✅ Grocy client initialized successfully")
         else:
             logger.error("❌ Grocy connection test failed")
+            logger.error(f"   URL: {config.grocy_url}")
+            logger.error(f"   API Key: {config.grocy_api_key[:10]}..." if config.grocy_api_key else "   API Key: None")
     except Exception as e:
-        logger.error(f"❌ Failed to initialize Grocy client: {e}")
+        logger.error(f"❌ Failed to initialize Grocy client: {e}", exc_info=True)
 else:
     logger.warning("⚠️  Grocy not configured")
+    logger.warning(f"   grocy_url: {config.grocy_url}")
+    logger.warning(f"   grocy_api_key: {'set' if config.grocy_api_key else 'not set'}")
 
 
 @app.route('/')
