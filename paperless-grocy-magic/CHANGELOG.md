@@ -5,6 +5,33 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-beta] - 2025-11-22
+
+### Added
+- **PDF Upload Feature** - Upload receipt PDFs directly in the UI! 🎉
+- File input for selecting PDF files
+- "Extract Text from PDF" button
+- New API endpoint: `POST /api/extract-pdf`
+- PDF text extraction using pdfplumber
+- Multi-page PDF support
+- Extracted text automatically fills textarea
+- Visual feedback during extraction
+
+### How to use
+1. Open the web UI
+2. Click "Choose File" and select a receipt PDF
+3. Click "📄 Extract Text from PDF"
+4. Text appears in textarea (editable!)
+5. Click "🚀 Process Receipt" to parse and sync to Grocy
+
+### Technical Details
+- Uses pdfplumber library for PDF text extraction
+- Supports multi-page PDFs
+- Works with PDFs that have text layer (digital receipts)
+- For scanned images without OCR: use Paperless-ngx first
+- File upload via FormData (multipart/form-data)
+- Returns extracted text + page count + character count
+
 ## [0.3.7-beta] - 2025-11-22
 
 ### Fixed

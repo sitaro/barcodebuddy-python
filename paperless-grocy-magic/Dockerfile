@@ -10,7 +10,8 @@ RUN apk add --no-cache \
         flask \
         requests \
         python-dateutil \
-        fuzzywuzzy
+        fuzzywuzzy \
+        pdfplumber
 
 # Copy application files
 COPY run.sh /

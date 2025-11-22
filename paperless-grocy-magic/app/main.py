@@ -78,8 +78,16 @@ def index():
 
     <div class="container">
         <div class="panel">
-            <h2>📄 Receipt Text</h2>
-            <textarea id="receiptText">REWE MARKT
+            <h2>📄 Receipt Input</h2>
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 4px;">
+                <strong>📤 Upload PDF Receipt:</strong><br>
+                <input type="file" id="pdfFile" accept=".pdf" style="margin: 10px 0;">
+                <button onclick="uploadPDF()" class="secondary">📄 Extract Text from PDF</button>
+            </div>
+
+            <strong>Or paste receipt text manually:</strong>
+            <textarea id="receiptText" style="margin-top: 10px;">REWE MARKT
 Homburger Landstr. 340-352
 60433 Frankfurter-Berg
 UID Nr.: DE812706034
@@ -214,6 +222,54 @@ Datum: 22.11.2025</textarea>
         function clearResult() {
             document.getElementById('result').innerHTML = 'Click "Process Receipt" to test...';
         }
+
+        function uploadPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a PDF file first!');
+                return;
+            }
+
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Please select a PDF file!');
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Extracting text from PDF...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(baseUrl + '/api/extract-pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => {
+                if (!r.ok) {
+                    return r.text().then(text => {
+                        throw new Error(`HTTP ${r.status}: ${text}`);
+                    });
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Put extracted text into textarea
+                    document.getElementById('receiptText').value = data.text;
+                    resultDiv.innerHTML = `<span class="success">✅ Text extracted successfully!</span>\n\n` +
+                                        `📄 Extracted ${data.text.length} characters\n\n` +
+                                        `Now click "Process Receipt" to parse it.`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error: ${data.error}</span>`;
+                }
+            })
+            .catch(e => {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
+            });
+        }
     </script>
 </body>
 </html>
@@ -251,6 +307,71 @@ def status():
             'supported_stores': config.supported_stores
         }
     })
+
+
+@app.route('/api/extract-pdf', methods=['POST'])
+def extract_pdf():
+    """Extract text from uploaded PDF file."""
+    logger.info("Received PDF extraction request")
+
+    try:
+        # Check if file was uploaded
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No file uploaded'
+            }), 400
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No file selected'
+            }), 400
+
+        if not file.filename.lower().endswith('.pdf'):
+            return jsonify({
+                'success': False,
+                'error': 'Only PDF files are supported'
+            }), 400
+
+        # Extract text from PDF
+        import io
+        import pdfplumber
+
+        pdf_bytes = file.read()
+        text_content = ""
+
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            logger.info(f"PDF has {len(pdf.pages)} pages")
+            for page_num, page in enumerate(pdf.pages, 1):
+                page_text = page.extract_text()
+                if page_text:
+                    text_content += page_text + "\n"
+                    logger.debug(f"Page {page_num}: {len(page_text)} chars")
+
+        if not text_content.strip():
+            return jsonify({
+                'success': False,
+                'error': 'No text found in PDF. It might be a scanned image without OCR.'
+            }), 400
+
+        logger.info(f"Extracted {len(text_content)} characters from PDF")
+
+        return jsonify({
+            'success': True,
+            'text': text_content,
+            'pages': len(pdf.pages) if 'pdf' in locals() else 0,
+            'chars': len(text_content)
+        })
+
+    except Exception as e:
+        logger.error(f"Error extracting PDF: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': f'Failed to extract PDF: {str(e)}'
+        }), 500
 
 
 @app.route('/api/process-receipt', methods=['POST'])
