@@ -5,6 +5,21 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5-beta] - 2025-11-22
+
+### Fixed
+- **Critical: Removed invalid 'price' field** - Grocy products table has no price column
+- Products now create/update successfully without database errors
+- Price information stored in description field instead (e.g., "Preis: 7.98€ (REWE)")
+- Fixes HTTP 400 error: "table products has no column named price"
+
+### Technical Details
+- Grocy stores prices separately (via purchases/shopping_locations), not in products table
+- Product creation now works without price field
+- Product updates store price info in description for reference
+- Format: "Automatisch erstellt - Preis: 1.29€" for new products
+- Format: "Preis: 23.00€ (REWE)" appended to description for updates
+
 ## [0.3.4-beta] - 2025-11-22
 
 ### Fixed

@@ -124,10 +124,10 @@ class GrocyClient:
                 logger.error(error_msg)
                 return False, error_msg
 
-            # Update price
-            update_data = {
-                'price': str(price)  # Grocy expects string
-            }
+            # Grocy products table doesn't have a 'price' column
+            # Prices are stored separately (via purchases/shopping_locations)
+            # We'll store price info in the description field for reference
+            update_data = {}
 
             # Add store to description if provided
             if store:
@@ -183,13 +183,16 @@ class GrocyClient:
 
             logger.debug(f"Using location_id={location_id}, qu_id={qu_id}")
 
+            # Grocy products table doesn't have a 'price' column
+            # Store price in description for reference
+            price_desc = f'Automatisch erstellt - Preis: {price:.2f}€' if price else 'Automatisch erstellt'
+
             product_data = {
                 'name': name,
-                'description': f'Automatisch erstellt',
+                'description': price_desc,
                 'location_id': location_id,
                 'qu_id_purchase': qu_id,
-                'qu_id_stock': qu_id,
-                'price': str(price)
+                'qu_id_stock': qu_id
             }
 
             if barcode:
