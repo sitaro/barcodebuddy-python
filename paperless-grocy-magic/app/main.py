@@ -157,6 +157,7 @@ Datum: 22.11.2025</textarea>
                 output += `📅 Date: ${data.date || 'N/A'}\\n`;
                 output += `📦 Total Items: ${data.total_items || 0}\\n`;
                 output += `✅ Updated: ${data.updated || 0}\\n`;
+                output += `✨ Created: ${data.created || 0}\\n`;
                 output += `❌ Failed: ${data.failed || 0}\\n`;
                 output += `⚠️  Unmatched: ${data.unmatched || 0}\\n\\n`;
 
@@ -165,9 +166,19 @@ Datum: 22.11.2025</textarea>
                     output += '─'.repeat(60) + '\\n';
 
                     data.matches.forEach((m, i) => {
-                        const status = m.matched ? '✅' : '❌';
+                        let status = '❌';
+                        if (m.created) {
+                            status = '✨';  // Created new product
+                        } else if (m.matched) {
+                            status = '✅';  // Updated existing
+                        }
+
                         output += `${i+1}. ${status} ${m.receipt_item}\\n`;
-                        if (m.matched) {
+
+                        if (m.created) {
+                            output += `   ✨ Created new product: ${m.grocy_product}\\n`;
+                            output += `   💰 Price: ${m.price.toFixed(2)}€\\n`;
+                        } else if (m.matched) {
                             output += `   → ${m.grocy_product} (score: ${m.score})\\n`;
                             output += `   💰 Price: ${m.price.toFixed(2)}€\\n`;
                         } else {

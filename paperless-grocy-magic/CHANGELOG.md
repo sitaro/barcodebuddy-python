@@ -5,6 +5,32 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-beta] - 2025-11-22
+
+### Added
+- **Automatic Product Creation** - Unknown products are now automatically created in Grocy!
+- New products get proper price and name from receipt
+- UI shows ✨ icon for newly created products
+- Created count in statistics (✨ Created: X)
+- Separate tracking for updated vs created products
+
+### Changed
+- Unmatched products are now attempted to be created
+- Success if items were updated OR created (not just updated)
+- Better logging: "Created: Product (1.29€)"
+
+### How it works
+1. Parse receipt → Extract products
+2. Match to existing Grocy products (fuzzy matching)
+3. Update prices for matched products ✅
+4. **Create new products for unmatched items** ✨ NEW!
+5. Report results with created/updated/failed stats
+
+Example:
+- Receipt has "Vorderhaxe" (not in Grocy)
+- ✨ Creates new Grocy product "Vorderhaxe" with price 7.98€
+- Next time: Will match and update price instead
+
 ## [0.2.6-beta] - 2025-11-22
 
 ### Fixed

@@ -19,6 +19,7 @@ class PriceUpdateResult:
         self.updated_count = 0
         self.failed_count = 0
         self.unmatched_count = 0
+        self.created_count = 0
         self.errors: List[str] = []
 
     def to_dict(self) -> Dict:
@@ -29,6 +30,7 @@ class PriceUpdateResult:
             'date': self.receipt.date.isoformat() if self.receipt and self.receipt.date else None,
             'total_items': len(self.matches),
             'updated': self.updated_count,
+            'created': self.created_count,
             'failed': self.failed_count,
             'unmatched': self.unmatched_count,
             'matches': [
@@ -37,7 +39,8 @@ class PriceUpdateResult:
                     'grocy_product': m.grocy_product.name if m.grocy_product else None,
                     'price': m.receipt_item.price,
                     'score': m.score,
-                    'matched': m.is_match
+                    'matched': m.is_match,
+                    'created': getattr(m, 'was_created', False)
                 }
                 for m in self.matches
             ],
@@ -120,16 +123,52 @@ class PriceUpdateService:
                 result.errors.append(error_msg)
                 logger.error(f"❌ {error_msg}")
 
-        result.unmatched_count = len(unmatched)
+        # Step 5: Create new products for unmatched items
+        logger.info(f"Step 5: Creating {len(unmatched)} new products in Grocy...")
+        for item in unmatched:
+            try:
+                # Create product in Grocy
+                new_product = self.grocy.create_product(
+                    name=item.name,
+                    price=item.price
+                )
 
-        if unmatched:
-            logger.warning(f"⚠️  Unmatched items: {', '.join(item.name for item in unmatched)}")
+                if new_product:
+                    result.created_count += 1
+                    logger.info(f"✨ Created: {new_product.name} ({item.price:.2f}€)")
 
-        # Mark as successful if at least some items were updated
-        result.success = result.updated_count > 0
+                    # Update the match object to reflect creation
+                    for match in matches:
+                        if match.receipt_item == item:
+                            match.grocy_product = new_product
+                            match.was_created = True
+                            break
+                else:
+                    result.unmatched_count += 1
+                    error_msg = f"Failed to create product: {item.name}"
+                    result.errors.append(error_msg)
+                    logger.error(f"❌ {error_msg}")
+
+            except Exception as e:
+                result.unmatched_count += 1
+                error_msg = f"Error creating {item.name}: {str(e)}"
+                result.errors.append(error_msg)
+                logger.error(f"❌ {error_msg}")
+
+        # Count remaining unmatched (those that couldn't be created)
+        final_unmatched = [item for item in unmatched
+                          if not any(m.receipt_item == item and getattr(m, 'was_created', False)
+                                   for m in matches)]
+
+        if final_unmatched:
+            logger.warning(f"⚠️  Still unmatched: {', '.join(item.name for item in final_unmatched)}")
+
+        # Mark as successful if at least some items were updated or created
+        result.success = (result.updated_count > 0) or (result.created_count > 0)
 
         logger.info(
             f"Finished: {result.updated_count} updated, "
+            f"{result.created_count} created, "
             f"{result.failed_count} failed, {result.unmatched_count} unmatched"
         )
 
