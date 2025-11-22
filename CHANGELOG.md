@@ -5,6 +5,16 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.4-beta] - 2025-11-22
+
+### Fixed
+- **Critical**: Fixed initialization order bug where Babel locale_selector was configured before Config was loaded
+- Language auto-detection now works correctly with Home Assistant Core language setting
+- Debug logging for language detection now appears properly
+
+### Added
+- Debug endpoint `/api/debug-language` for troubleshooting language detection
+
 ## [2.10.3-beta] - 2025-11-22
 
 ### Added
