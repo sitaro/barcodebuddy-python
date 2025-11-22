@@ -5,6 +5,12 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.3-beta] - 2025-11-22
+
+### Fixed
+- CHANGELOG.md now in correct location for Home Assistant add-on directory
+- Fixes "No changelog found for add-on" message in Home Assistant update dialog
+
 ## [2.9.2-beta] - 2025-11-22
 
 ### Added
