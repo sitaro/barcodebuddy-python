@@ -12,6 +12,7 @@ startup: application
 boot: auto
 init: false
 hassio_api: true
+hassio_role: default
 
 # USB-Scanner Zugriff - Multiple scanners supported!
 devices:
