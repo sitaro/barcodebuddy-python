@@ -5,6 +5,13 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.6-beta] - 2025-11-22
+
+### Changed
+- Try `/supervisor/info` endpoint instead of `/core/info` for language detection
+- Added logging for Ingress headers and Accept-Language
+- Version bump to force fresh build in Home Assistant
+
 ## [2.10.5-beta] - 2025-11-22
 
 ### Fixed
