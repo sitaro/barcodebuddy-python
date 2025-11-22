@@ -147,11 +147,11 @@ class GrocyClient:
 
             result = self._request('PUT', f'/objects/products/{product_id}', json=update_data)
 
-            if result:
+            if result is not None:  # {} (empty dict) is also success (204 No Content)
                 logger.info(f"Updated price for product {product_id} ({product.name}): {price:.2f}€")
                 return True, ""
 
-            error_msg = "Grocy API returned empty response"
+            error_msg = "Grocy API returned None (request failed)"
             logger.error(error_msg)
             return False, error_msg
 

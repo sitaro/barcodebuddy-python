@@ -5,6 +5,21 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7-beta] - 2025-11-22
+
+### Fixed
+- **Critical: Empty dict false negative** - Fixed `if result:` treating `{}` as failure
+- Product updates now succeed when Grocy returns 204 No Content
+- Changed condition from `if result:` to `if result is not None:`
+- Fixes "Grocy API returned empty response" errors on successful updates
+
+### Technical Details
+- Grocy PUT /objects/products returns 204 No Content on success
+- `_request()` converts 204 to `{}` (empty dict)
+- Python's `if {}:` evaluates to False (empty dict is falsy)
+- Now correctly checking `if result is not None:` instead
+- This allows both `{}` (success) and `{"data": ...}` (success with body)
+
 ## [0.3.6-beta] - 2025-11-22
 
 ### Added
