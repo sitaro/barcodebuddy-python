@@ -67,9 +67,12 @@ class Config:
 
     @property
     def language(self) -> Optional[str]:
-        """Get configured language (empty = auto-detect)."""
-        lang = self._config.get('language', '').strip()
+        """Get configured language ('auto' = auto-detect)."""
+        lang = self._config.get('language', 'auto').strip()
+        # Return None for auto-detect, otherwise return the language code
+        if lang == 'auto' or not lang:
+            return None
         # Validate language code
-        if lang and lang in ['en', 'de', 'fr', 'es']:
+        if lang in ['en', 'de', 'fr', 'es']:
             return lang
         return None

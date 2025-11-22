@@ -52,8 +52,8 @@ options:
   enable_openfoodfacts: true
   enable_upcdatabase: true
 
-  # Language (empty = auto-detect from browser)
-  language: ""
+  # Language
+  language: "auto"
 
   # Debug Mode
   debug: false
@@ -73,7 +73,7 @@ schema:
   enable_upcdatabase: bool
 
   # Language
-  language: str
+  language: list(auto|en|de|fr|es)
 
   # Debug Mode
   debug: bool
