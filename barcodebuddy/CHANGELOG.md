@@ -5,6 +5,16 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.1] - 2025-11-22
+
+### Security
+- **Improved Security Rating**: Removed unnecessary privileged permissions (7/8 rating achieved)
+- Removed `full_access: true` (no longer grants full host access)
+- Enabled AppArmor protection
+- Removed `host_ipc` and `host_pid` access
+- Removed `SYS_ADMIN` and `SYS_RAWIO` privileged capabilities
+- Scanner access still works via device mapping and udev
+
 ## [2.10.0] - 2025-11-22
 
 ### Added
@@ -29,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - **EAN-Search.org** database integration (requires paid API key)
-- `enable_eansearch` configuration option
+- \`enable_eansearch\` configuration option
 
 ## [2.8.0] - 2025-11-22
 
@@ -82,20 +92,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.4.0] - 2025-11-20
 
 ### Added
-- **Quantity Barcodes**: Scan `BBUDDY-Q-X` to set quantity for next product
+- **Quantity Barcodes**: Scan \`BBUDDY-Q-X\` to set quantity for next product
 - Multiple quantity barcodes are automatically summed
 - UI shows quantity in parentheses: "Added: Product (3x)"
 - Special 🔢 icon for quantity barcode scans
 
 ### Changed
 - Quantity resets to 1 after successful product addition
-
-### Example
-```
-1. Scan BBUDDY-Q-3 → "🔢 Quantity set to: 3"
-2. Scan BBUDDY-Q-2 → "🔢 Quantity set to: 5"
-3. Scan product → "✅ Added: Chester (5x)"
-```
 
 ## [2.3.0] - 2025-11-20
 
@@ -131,10 +134,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **USB Scanner Support via hidraw**: Switched from evdev to hidraw devices
 - HID report parsing for keyboard emulation mode
-- Support for `/dev/hidraw0-4` devices
+- Support for \`/dev/hidraw0-4\` devices
 
 ### Fixed
-- Scanner device permission issues with `/dev/input/event*`
+- Scanner device permission issues with \`/dev/input/event*\`
 - Kernel kbd handler conflicts resolved by using hidraw
 
 ## [2.0.0] - 2025-11-20
@@ -157,6 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Feature |
 |---------|------|-------------|
+| 2.10.1 | 2025-11-22 | Security Improvements (7/8 rating) |
 | 2.10.0 | 2025-11-22 | PDF Barcode Generator |
 | 2.9.0 | 2025-11-22 | Multi-Language Support |
 | 2.8.0 | 2025-11-22 | Product Creation UI & Mode Switching |
@@ -182,8 +186,8 @@ The Python version is a complete rewrite with:
 - OpenFoodFacts integration built-in
 
 ### Configuration Changes
-- Scanner device now uses hidraw: `/dev/hidraw0` instead of `/dev/input/event3`
-- Grocy URL should not include `/api` suffix
+- Scanner device now uses hidraw: \`/dev/hidraw0\` instead of \`/dev/input/event3\`
+- Grocy URL should not include \`/api\` suffix
 - API keys are validated on startup with automatic retry
 
 ---
