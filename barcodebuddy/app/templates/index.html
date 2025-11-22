@@ -258,6 +258,15 @@
         }
 
         function loadScans() {
+            // Don't refresh if user is typing in a product name input
+            const productInputs = document.querySelectorAll('[id^="product-name-"]');
+            for (let input of productInputs) {
+                if (input === document.activeElement || input.value.trim() !== '') {
+                    console.log('Skipping refresh - user is entering product name');
+                    return;
+                }
+            }
+
             fetch('api/scans')
                 .then(response => response.json())
                 .then(scans => {
