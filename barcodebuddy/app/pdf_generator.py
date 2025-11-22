@@ -1,11 +1,11 @@
 """PDF Generator for Quantity Barcodes."""
 import io
-import barcode
-from barcode.writer import ImageWriter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from PIL import Image
+from reportlab.graphics.barcode import code128
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing
 
 
 def generate_quantity_barcodes_pdf():
@@ -29,8 +29,8 @@ def generate_quantity_barcodes_pdf():
 
     # Layout settings
     start_y = height - 120
-    barcode_height = 60
-    spacing = 80
+    barcode_height = 50
+    spacing = 90
     left_margin = 50
     right_column_x = width / 2 + 20
 
@@ -45,35 +45,29 @@ def generate_quantity_barcodes_pdf():
         x_pos = left_margin if col == 0 else right_column_x
         y_pos = start_y - (row * spacing)
 
-        # Generate barcode image
         try:
-            # Create Code128 barcode
-            code128 = barcode.get_barcode_class('code128')
-            barcode_img = code128(barcode_text, writer=ImageWriter())
-
-            # Save to buffer
-            img_buffer = io.BytesIO()
-            barcode_img.write(img_buffer, options={
-                'module_height': 10,
-                'module_width': 0.3,
-                'font_size': 10,
-                'text_distance': 3,
-                'quiet_zone': 2
-            })
-            img_buffer.seek(0)
-
-            # Draw barcode on PDF
-            c.drawImage(img_buffer, x_pos, y_pos - barcode_height,
-                       width=180, height=barcode_height, preserveAspectRatio=True)
-
             # Add label above barcode
             c.setFont("Helvetica-Bold", 14)
-            c.drawString(x_pos, y_pos + 5, f"Quantity: {qty}")
+            c.drawString(x_pos, y_pos + 10, f"Quantity: {qty}")
+
+            # Create Code128 barcode using reportlab
+            barcode_obj = code128.Code128(
+                barcode_text,
+                barWidth=1.2,
+                barHeight=barcode_height,
+                humanReadable=True,
+                fontSize=10
+            )
+
+            # Draw barcode
+            barcode_obj.drawOn(c, x_pos, y_pos - barcode_height - 5)
 
         except Exception as e:
             # Fallback: just draw text if barcode generation fails
             c.setFont("Helvetica", 10)
-            c.drawString(x_pos, y_pos, f"Error generating barcode: {barcode_text}")
+            c.drawString(x_pos, y_pos, f"Error: {barcode_text}")
+            c.setFont("Helvetica", 8)
+            c.drawString(x_pos, y_pos - 15, f"{str(e)[:50]}")
 
     # Footer
     c.setFont("Helvetica-Oblique", 10)
