@@ -5,6 +5,22 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4-beta] - 2025-11-22
+
+### Fixed
+- **Enhanced debug logging** - Massively improved API request/response logging
+- Logs full URL, request data (JSON), status code, headers, and response text
+- Separate handling for JSONDecodeError vs RequestException
+- Shows first 500-1000 chars of response for debugging
+- Debug logs show exact HTTP communication with Grocy
+
+### Technical Details
+- `_request()` now logs request details before sending
+- Logs response status/headers/body before processing
+- Catches JSONDecodeError separately to show invalid JSON responses
+- Shows response text even on exceptions (if available)
+- Helps diagnose "empty response" issues by showing what Grocy actually returns
+
 ## [0.3.3-beta] - 2025-11-22
 
 ### Fixed

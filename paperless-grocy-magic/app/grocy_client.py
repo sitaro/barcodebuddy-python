@@ -40,16 +40,34 @@ class GrocyClient:
         url = f"{self.base_url}/api{endpoint}"
 
         try:
+            logger.debug(f"Grocy API: {method} {url}")
+            if 'json' in kwargs:
+                logger.debug(f"Request data: {kwargs['json']}")
+
             response = self.session.request(method, url, timeout=10, **kwargs)
+
+            logger.debug(f"Response status: {response.status_code}")
+            logger.debug(f"Response headers: {dict(response.headers)}")
+            logger.debug(f"Response text (first 500 chars): {response.text[:500]}")
+
             response.raise_for_status()
 
             if response.status_code == 204:  # No content
+                logger.debug("Got 204 No Content, returning empty dict")
                 return {}
 
             return response.json()
 
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(f"Grocy API JSON decode error ({method} {endpoint}): {e}")
+            logger.error(f"Response was: {response.text[:1000]}")
+            return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Grocy API error ({method} {endpoint}): {e}")
+            logger.error(f"Grocy API request error ({method} {endpoint}): {e}")
+            logger.error(f"Full URL: {url}")
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response text: {e.response.text[:1000]}")
             return None
 
     def test_connection(self) -> bool:
