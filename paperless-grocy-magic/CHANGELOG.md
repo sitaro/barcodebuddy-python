@@ -1,0 +1,33 @@
+# Changelog - Paperless Grocy Magic
+
+All notable changes to Paperless Grocy Magic will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0-beta] - 2025-11-22
+
+### Added
+- **Initial Release**: Basic add-on structure
+- Paperless-ngx API integration (configuration)
+- Grocy API integration (configuration)
+- Flask web application framework
+- Configuration management system
+- Status API endpoints
+- Multi-architecture Docker support (armhf, armv7, aarch64, amd64, i386)
+- Configurable store support (Rewe, Edeka, Aldi, Lidl, Penny)
+- Fuzzy matching configuration
+
+### Planned Features
+- Receipt text parsing logic
+- Product matching algorithm
+- Price update functionality
+- Automatic processing scheduler
+- Web UI for manual matching
+- Statistics dashboard
+
+---
+
+## Contributing
+
+Built with ❤️ using [Claude Code](https://claude.com/claude-code)

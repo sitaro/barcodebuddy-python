@@ -1,0 +1,75 @@
+name: "Paperless Grocy Magic"
+version: "0.1.0-beta"
+slug: "paperless-grocy-magic"
+description: "Parse receipts from Paperless-ngx and sync prices to Grocy"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+startup: application
+boot: auto
+init: false
+hassio_api: true
+hassio_role: default
+
+ports:
+  "5001/tcp": 5001
+
+webui: "http://[HOST]:[PORT:5001]"
+ingress: true
+ingress_port: 5001
+ingress_entry: "/"
+
+options:
+  # Paperless Integration
+  paperless_url: ""
+  paperless_api_key: ""
+  paperless_tag: "kassenbon"
+
+  # Grocy Integration
+  grocy_url: ""
+  grocy_api_key: ""
+
+  # Processing Options
+  auto_process_receipts: true
+  process_interval_hours: 1
+
+  # Matching Configuration
+  fuzzy_match_threshold: 0.8
+
+  # Supported Stores
+  supported_stores:
+    - "rewe"
+    - "edeka"
+    - "aldi"
+    - "lidl"
+    - "penny"
+
+  # Debug Mode
+  debug: false
+
+schema:
+  # Paperless Integration
+  paperless_url: str
+  paperless_api_key: str
+  paperless_tag: str
+
+  # Grocy Integration
+  grocy_url: str
+  grocy_api_key: str
+
+  # Processing Options
+  auto_process_receipts: bool
+  process_interval_hours: int(1,24)
+
+  # Matching Configuration
+  fuzzy_match_threshold: float(0.5,1.0)
+
+  # Supported Stores
+  supported_stores:
+    - list(rewe|edeka|aldi|lidl|penny|kaufland|netto)
+
+  # Debug Mode
+  debug: bool
