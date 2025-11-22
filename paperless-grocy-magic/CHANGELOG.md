@@ -5,6 +5,14 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3-beta] - 2025-11-22
+
+### Changed
+- **Removed python-Levenshtein** - Was causing very slow Docker builds (compilation)
+- Removed build tools (gcc, musl-dev, python3-dev) - no longer needed
+- Using pure Python fuzzywuzzy (slightly slower but builds in seconds)
+- Drastically faster build times, especially on ARM architectures
+
 ## [0.2.2-beta] - 2025-11-22
 
 ### Fixed

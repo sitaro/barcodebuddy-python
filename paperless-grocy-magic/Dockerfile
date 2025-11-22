@@ -6,16 +6,11 @@ RUN apk add --no-cache \
     python3 \
     py3-pip \
     jq \
-    gcc \
-    musl-dev \
-    python3-dev \
     && pip3 install --no-cache-dir --break-system-packages \
         flask \
         requests \
         python-dateutil \
-        fuzzywuzzy \
-        python-Levenshtein \
-    && apk del gcc musl-dev python3-dev
+        fuzzywuzzy
 
 # Copy application files
 COPY run.sh /
