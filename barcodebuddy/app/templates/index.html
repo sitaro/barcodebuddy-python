@@ -136,57 +136,9 @@
             margin-top: 20px;
         }
 
-        .language-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 10px;
-            padding: 10px 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .language-switcher label {
-            font-size: 20px;
-            margin: 0;
-        }
-
-        .language-select {
-            padding: 8px 12px;
-            border: 2px solid #e5e7eb;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            color: #667eea;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .language-select:hover {
-            border-color: #667eea;
-        }
-
-        .language-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
     </style>
 </head>
 <body>
-    <div class="language-switcher">
-        <label for="language-select">🌍</label>
-        <select id="language-select" class="language-select" onchange="setLanguage(this.value)">
-            <option value="en" {{ 'selected' if current_locale == 'en' else '' }}>English</option>
-            <option value="de" {{ 'selected' if current_locale == 'de' else '' }}>Deutsch</option>
-            <option value="fr" {{ 'selected' if current_locale == 'fr' else '' }}>Français</option>
-            <option value="es" {{ 'selected' if current_locale == 'es' else '' }}>Español</option>
-        </select>
-    </div>
     <div class="container">
         <div class="header">
             <h1>📦 {{ _('barcode_buddy') }}</h1>
@@ -244,18 +196,6 @@
             network_error: "{{ _('network_error') }}",
             no_scans_yet: "{{ _('no_scans_yet') }}"
         };
-
-        // Language switcher
-        function setLanguage(lang) {
-            fetch(`/api/language/${lang}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                })
-                .catch(error => console.error('Language switch error:', error));
-        }
 
         function submitBarcode() {
             console.log('submitBarcode called');
