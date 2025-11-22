@@ -5,6 +5,11 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.1-beta] - 2025-11-22
+
+### Fixed
+- Language schema now uses `select()` instead of `list()` for proper dropdown rendering in HA
+
 ## [2.11.0-beta] - 2025-11-22
 
 ### Changed
