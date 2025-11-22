@@ -1,2 +1,2 @@
 """Barcode Buddy Python Application."""
-__version__ = "2.10.1-beta"
+__version__ = "2.10.2-beta"
