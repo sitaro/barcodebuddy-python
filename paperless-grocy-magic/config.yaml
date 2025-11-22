@@ -1,5 +1,5 @@
 name: "Paperless Grocy Magic"
-version: "0.4.1-beta"
+version: "0.5.0-beta"
 slug: "paperless-grocy-magic"
 description: "Parse receipts from Paperless-ngx and sync prices to Grocy"
 arch:
@@ -26,7 +26,8 @@ options:
   # Paperless Integration
   paperless_url: ""
   paperless_api_key: ""
-  paperless_tag: "kassenbon"
+  paperless_tag: "ebon"
+  paperless_processed_field: "Bon verarbeitet"
 
   # Grocy Integration
   grocy_url: ""
@@ -55,6 +56,7 @@ schema:
   paperless_url: str
   paperless_api_key: str
   paperless_tag: str
+  paperless_processed_field: str
 
   # Grocy Integration
   grocy_url: str

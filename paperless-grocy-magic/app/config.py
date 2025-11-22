@@ -42,7 +42,12 @@ class Config:
     @property
     def paperless_tag(self) -> str:
         """Get Paperless tag for receipts."""
-        return self._config.get('paperless_tag', 'kassenbon').strip()
+        return self._config.get('paperless_tag', 'ebon').strip()
+
+    @property
+    def paperless_processed_field(self) -> str:
+        """Get Paperless custom field name for processed status."""
+        return self._config.get('paperless_processed_field', 'Bon verarbeitet').strip()
 
     @property
     def grocy_url(self) -> str:

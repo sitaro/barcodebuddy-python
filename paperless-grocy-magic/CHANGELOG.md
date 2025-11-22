@@ -5,6 +5,49 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0-beta] - 2025-11-22
+
+### Added
+- **🎉 Full Paperless-ngx Integration** - Automatic receipt processing!
+- New `PaperlessClient` for Paperless API communication
+- Query documents by tag (configurable, default: "ebon")
+- Filter by custom boolean field (configurable, default: "Bon verarbeitet")
+- Auto-download PDFs from Paperless
+- Auto-extract text from PDFs
+- Auto-process receipts and sync to Grocy
+- Auto-mark as processed in Paperless after success
+- New API endpoint: `POST /api/process-paperless`
+- New UI button: "🚀 Process Paperless Receipts"
+- Configurable settings: `paperless_tag`, `paperless_processed_field`
+
+### Workflow
+1. User clicks "Process Paperless Receipts" in UI
+2. System queries Paperless for documents with tag "ebon"
+3. Filters to only unprocessed (custom field empty or false)
+4. Downloads each PDF
+5. Extracts text using PyPDF2
+6. Parses receipt (REWE parser)
+7. Creates/updates products in Grocy
+8. Adds to stock with prices
+9. Marks document as processed in Paperless
+10. Shows detailed results in UI
+
+### Configuration
+```yaml
+paperless_url: "http://paperless:8000"
+paperless_api_key: "your-api-key"
+paperless_tag: "ebon"
+paperless_processed_field: "Bon verarbeitet"
+```
+
+### Technical Details
+- Paperless API: `/api/documents/`, `/api/tags/`, `/api/custom_fields/`
+- Downloads PDF via `/api/documents/{id}/download/`
+- Updates custom field via PATCH `/api/documents/{id}/`
+- Supports multi-page PDFs
+- Detailed result reporting per document
+- Error handling for failed documents
+
 ## [0.4.1-beta] - 2025-11-22
 
 ### Changed

@@ -4,6 +4,7 @@ from flask import Flask, render_template, jsonify, request
 from config import config
 from datetime import datetime
 from grocy_client import GrocyClient
+from paperless_client import PaperlessClient
 from price_updater import PriceUpdateService
 
 # Configure logging
@@ -17,6 +18,26 @@ logger = logging.getLogger(__name__)
 # Create Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'paperless-grocy-magic-secret'
+
+# Initialize Paperless client
+paperless_client = None
+
+if config.paperless_url and config.paperless_api_key:
+    try:
+        logger.info(f"Initializing Paperless client with URL: {config.paperless_url}")
+        paperless_client = PaperlessClient(config.paperless_url, config.paperless_api_key)
+
+        logger.info("Testing Paperless connection...")
+        if paperless_client.test_connection():
+            logger.info("✅ Paperless client initialized successfully")
+        else:
+            logger.error("❌ Paperless connection test failed")
+            paperless_client = None
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize Paperless client: {e}", exc_info=True)
+        paperless_client = None
+else:
+    logger.warning("⚠️  Paperless not configured")
 
 # Initialize Grocy client and price updater
 grocy_client = None
@@ -79,6 +100,14 @@ def index():
     <div class="container">
         <div class="panel">
             <h2>📄 Receipt Input</h2>
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 4px;">
+                <strong>🔄 Auto-Process from Paperless:</strong><br>
+                <button onclick="processPaperless()" style="margin-top: 10px; background: #4CAF50;">🚀 Process Paperless Receipts</button>
+                <p style="font-size: 12px; margin: 10px 0 0 0; color: #666;">
+                    Processes all unprocessed receipts with tag "{{ config.paperless_tag }}"
+                </p>
+            </div>
 
             <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 4px;">
                 <strong>📤 Upload PDF Receipt:</strong><br>
@@ -270,6 +299,65 @@ Datum: 22.11.2025</textarea>
                 resultDiv.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
             });
         }
+
+        function processPaperless() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Processing Paperless receipts...';
+
+            fetch(baseUrl + '/api/process-paperless', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => {
+                if (!r.ok) {
+                    return r.text().then(text => {
+                        throw new Error(`HTTP ${r.status}: ${text}`);
+                    });
+                }
+                return r.json();
+            })
+            .then(data => {
+                let output = '';
+
+                if (data.success) {
+                    output += `<span class="success">✅ Paperless Processing Complete!</span>\n\n`;
+                } else {
+                    output += `<span class="error">❌ Paperless Processing Failed</span>\n\n`;
+                }
+
+                output += `📊 Summary:\n`;
+                output += `  Total receipts found: ${data.total || 0}\n`;
+                output += `  ✅ Successfully processed: ${data.processed || 0}\n`;
+                output += `  ❌ Failed: ${data.failed || 0}\n\n`;
+
+                if (data.results && data.results.length > 0) {
+                    output += '📋 Results:\n';
+                    output += '─'.repeat(60) + '\n';
+                    data.results.forEach((r, i) => {
+                        output += `${i+1}. Document ${r.document_id}: ${r.title}\n`;
+                        if (r.success) {
+                            output += `   ✅ Success - Updated: ${r.updated || 0}, Created: ${r.created || 0}\n`;
+                        } else {
+                            output += `   ❌ Failed: ${r.error}\n`;
+                        }
+                        if (r.warning) {
+                            output += `   ⚠️  ${r.warning}\n`;
+                        }
+                        output += '\n';
+                    });
+                } else if (data.message) {
+                    output += `\n${data.message}\n`;
+                }
+
+                output += '─'.repeat(60) + '\n';
+                output += 'Raw JSON:\n' + JSON.stringify(data, null, 2);
+
+                resultDiv.innerHTML = output;
+            })
+            .catch(e => {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
+            });
+        }
     </script>
 </body>
 </html>
@@ -410,6 +498,159 @@ def process_receipt():
 
     except Exception as e:
         logger.error(f"Error processing receipt: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/process-paperless', methods=['POST'])
+def process_paperless():
+    """Process unprocessed receipts from Paperless-ngx."""
+    logger.info("Received Paperless processing request")
+
+    if not paperless_client:
+        logger.error("Paperless client not initialized")
+        return jsonify({
+            'success': False,
+            'error': 'Paperless not configured or connection failed'
+        }), 503
+
+    if not price_updater:
+        logger.error("Price updater not initialized")
+        return jsonify({
+            'success': False,
+            'error': 'Grocy not configured or connection failed'
+        }), 503
+
+    try:
+        # Get configuration
+        tag_name = config.paperless_tag
+        field_name = config.paperless_processed_field
+
+        logger.info(f"Querying Paperless for unprocessed receipts (tag: '{tag_name}', field: '{field_name}')")
+
+        # Get unprocessed documents
+        documents = paperless_client.get_documents_by_tag(tag_name, field_name)
+
+        if not documents:
+            logger.info("No unprocessed receipts found")
+            return jsonify({
+                'success': True,
+                'message': 'No unprocessed receipts found',
+                'processed': 0,
+                'failed': 0,
+                'results': []
+            })
+
+        logger.info(f"Found {len(documents)} unprocessed receipts")
+
+        # Process each document
+        results = []
+        processed_count = 0
+        failed_count = 0
+
+        for doc in documents:
+            logger.info(f"Processing document {doc.id}: {doc.title}")
+
+            try:
+                # Download PDF
+                pdf_bytes = paperless_client.download_document(doc.id)
+                if not pdf_bytes:
+                    logger.error(f"Failed to download document {doc.id}")
+                    results.append({
+                        'document_id': doc.id,
+                        'title': doc.title,
+                        'success': False,
+                        'error': 'Failed to download PDF'
+                    })
+                    failed_count += 1
+                    continue
+
+                # Extract text from PDF
+                import io
+                from PyPDF2 import PdfReader
+
+                pdf_reader = PdfReader(io.BytesIO(pdf_bytes))
+                text_content = ""
+
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content += page_text + "\n"
+
+                if not text_content.strip():
+                    logger.error(f"No text extracted from document {doc.id}")
+                    results.append({
+                        'document_id': doc.id,
+                        'title': doc.title,
+                        'success': False,
+                        'error': 'No text found in PDF'
+                    })
+                    failed_count += 1
+                    continue
+
+                logger.info(f"Extracted {len(text_content)} characters from document {doc.id}")
+
+                # Process receipt
+                result = price_updater.process_receipt_text(text_content)
+
+                if result.success:
+                    # Mark as processed in Paperless
+                    if paperless_client.update_custom_field(doc.id, field_name, True):
+                        logger.info(f"✅ Processed document {doc.id} successfully")
+                        processed_count += 1
+                        results.append({
+                            'document_id': doc.id,
+                            'title': doc.title,
+                            'success': True,
+                            'updated': result.updated_count,
+                            'created': result.created_count,
+                            'failed': result.failed_count
+                        })
+                    else:
+                        logger.warning(f"Processed {doc.id} but failed to mark as processed")
+                        results.append({
+                            'document_id': doc.id,
+                            'title': doc.title,
+                            'success': True,
+                            'warning': 'Could not mark as processed in Paperless',
+                            'updated': result.updated_count,
+                            'created': result.created_count
+                        })
+                        processed_count += 1
+                else:
+                    logger.error(f"❌ Failed to process document {doc.id}")
+                    results.append({
+                        'document_id': doc.id,
+                        'title': doc.title,
+                        'success': False,
+                        'error': f"Processing failed: {', '.join(result.errors)}"
+                    })
+                    failed_count += 1
+
+            except Exception as e:
+                logger.error(f"Error processing document {doc.id}: {e}", exc_info=True)
+                results.append({
+                    'document_id': doc.id,
+                    'title': doc.title,
+                    'success': False,
+                    'error': str(e)
+                })
+                failed_count += 1
+
+        logger.info(f"Paperless processing complete: {processed_count} processed, {failed_count} failed")
+
+        return jsonify({
+            'success': True,
+            'processed': processed_count,
+            'failed': failed_count,
+            'total': len(documents),
+            'results': results
+        })
+
+    except Exception as e:
+        logger.error(f"Error processing Paperless receipts: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
