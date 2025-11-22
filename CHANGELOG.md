@@ -5,6 +5,108 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.1-beta] - 2025-11-22
+
+### Added
+- **EAN-Search.org** database integration (free, no API key needed)
+- **UPC Database** integration (free tier, ~100 requests/day)
+- Multi-database lookup chain for better barcode coverage
+
+### Changed
+- Lookup order: Grocy → OpenFoodFacts → EAN-Search → UPC Database
+- UI shows which database product was found in (e.g., "Created from EAN-Search")
+- "Not found" message now lists all 4 databases
+
+## [2.9.0-beta] - 2025-11-22
+
+### Changed
+- Prepared new_features branch for next development cycle
+- Version bump for future features
+
+## [2.8.0] - 2025-11-22
+
+### Added
+- **Product Creation UI**: Create products from unknown barcodes directly in the web interface
+- **Mode Switching**: Toggle between Add/Consume modes with special barcodes (BBUDDY-ADD / BBUDDY-CONSUME)
+- Configurable special barcode texts in add-on configuration
+- Input field appears for unknown barcodes to enter product name manually
+
+### Changed
+- **Auto-detection** of all scanner devices (hidraw and input/event)
+- Active scanner devices now displayed in UI
+- Removed unused scanner_device configuration option
+- Enhanced UI responsiveness
+
+### Fixed
+- Auto-refresh pauses while typing product name
+- Product creation refresh issues resolved
+- Button state management during product creation
+
+## [2.7.3-beta] - 2025-11-22
+
+### Removed
+- Removed unused scanner_device configuration option (fully automatic now)
+
+### Changed
+- Startup log message updated to reflect auto-detection
+
+## [2.7.2-beta] - 2025-11-22
+
+### Fixed
+- Auto-refresh blocking product name input field
+- Allow refresh when input is disabled (creation in progress)
+
+## [2.7.1-beta] - 2025-11-22
+
+### Fixed
+- Product creation refresh timing issues
+
+## [2.7.0-beta] - 2025-11-22
+
+### Added
+- **Product Creation from UI**: When barcode not found, show input field for product name
+- Automatic product creation in Grocy with barcode association
+- Automatic stock addition after product creation
+
+## [2.6.2-beta] - 2025-11-22
+
+### Fixed
+- UI scanner device display now shows actual active devices instead of config value
+
+## [2.6.1-beta] - 2025-11-22
+
+### Added
+- Configurable special barcode texts (barcode_add, barcode_consume, barcode_quantity_prefix)
+
+## [2.6.0] - 2025-11-22
+
+### Added
+- MIT License
+- Initial stable release with all beta features
+
+## [2.5.0] - 2025-11-22
+
+### Added
+- **Mode Switching**: BBUDDY-ADD and BBUDDY-CONSUME barcodes
+- Persistent mode state (add/consume)
+- Mode indicator (🔄) in UI
+
+## [2.4.3] - 2025-11-22
+
+### Fixed
+- Quantity calculation off-by-one error (was adding 11 instead of 10)
+- Quantity now starts at 0, defaults to 1 if no quantity barcode scanned
+
+## [2.4.2] - 2025-11-22
+
+### Fixed
+- Nested product structure handling from Grocy API
+
+## [2.4.1] - 2025-11-22
+
+### Fixed
+- Grocy API compatibility issues
+
 ## [2.4.0] - 2025-11-20
 
 ### Added
@@ -83,6 +185,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Feature |
 |---------|------|-------------|
+| 2.9.1-beta | 2025-11-22 | EAN-Search & UPC Database |
+| 2.8.0 | 2025-11-22 | Product Creation UI & Mode Switching |
+| 2.7.0-beta | 2025-11-22 | Manual Product Creation |
+| 2.6.0 | 2025-11-22 | Stable Release |
+| 2.5.0 | 2025-11-22 | Mode Switching (Add/Consume) |
 | 2.4.0 | 2025-11-20 | Quantity Barcodes (BBUDDY-Q-X) |
 | 2.3.0 | 2025-11-20 | OpenFoodFacts Integration |
 | 2.2.0 | 2025-11-20 | Multi-Scanner Support |
