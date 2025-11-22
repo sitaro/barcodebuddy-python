@@ -1,0 +1,65 @@
+# English translations for Barcode Buddy.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "barcode_buddy"
+msgstr "Barcode Buddy"
+
+msgid "grocy_connected"
+msgstr "Grocy Connected"
+
+msgid "no_grocy"
+msgstr "No Grocy"
+
+msgid "scanner_active"
+msgstr "Scanner Active"
+
+msgid "manual_scan"
+msgstr "Manual Scan"
+
+msgid "enter_barcode"
+msgstr "Enter barcode or scan..."
+
+msgid "add"
+msgstr "Add"
+
+msgid "active_scanner_devices"
+msgstr "Active Scanner Devices"
+
+msgid "no_devices_detected"
+msgstr "No devices detected yet (monitoring...)"
+
+msgid "status"
+msgstr "Status"
+
+msgid "waiting_for_scans"
+msgstr "Waiting for scans..."
+
+msgid "recent_scans"
+msgstr "Recent Scans"
+
+msgid "no_scans_yet"
+msgstr "No scans yet. Scan a barcode to get started!"
+
+msgid "product_name"
+msgstr "Product name..."
+
+msgid "create_and_add"
+msgstr "Create & Add"
+
+msgid "creating"
+msgstr "Creating..."
+
+msgid "enter_product_name"
+msgstr "Please enter a product name"
+
+msgid "error"
+msgstr "Error"
+
+msgid "failed_to_create"
+msgstr "Failed to create product"
+
+msgid "network_error"
+msgstr "Network error. Please try again."

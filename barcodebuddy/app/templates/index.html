@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Buddy</title>
+    <title>{{ _('barcode_buddy') }}</title>
     <style>
         * {
             margin: 0;
@@ -135,30 +135,70 @@
             border-radius: 5px;
             margin-top: 20px;
         }
+
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 5px;
+        }
+
+        .lang-btn {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .lang-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
     </style>
 </head>
 <body>
+    <div class="language-switcher">
+        <button class="lang-btn" onclick="setLanguage('en')" id="lang-en">EN</button>
+        <button class="lang-btn" onclick="setLanguage('de')" id="lang-de">DE</button>
+        <button class="lang-btn" onclick="setLanguage('fr')" id="lang-fr">FR</button>
+        <button class="lang-btn" onclick="setLanguage('es')" id="lang-es">ES</button>
+    </div>
     <div class="container">
         <div class="header">
-            <h1>📦 Barcode Buddy</h1>
+            <h1>📦 {{ _('barcode_buddy') }}</h1>
             <p>
                 {% if has_grocy %}
-                <span class="status success">✓ Grocy Connected</span>
+                <span class="status success">✓ {{ _('grocy_connected') }}</span>
                 {% else %}
-                <span class="status warning">⚠ No Grocy</span>
+                <span class="status warning">⚠ {{ _('no_grocy') }}</span>
                 {% endif %}
-                <span class="status success">✓ Scanner Active</span>
+                <span class="status success">✓ {{ _('scanner_active') }}</span>
             </p>
         </div>
 
         <div class="card">
-            <h2>🔍 Manual Scan</h2>
+            <h2>🔍 {{ _('manual_scan') }}</h2>
             <div class="manual-input">
-                <input type="text" id="barcode-input" placeholder="Enter barcode or scan..." autofocus>
-                <button onclick="submitBarcode()">Add</button>
+                <input type="text" id="barcode-input" placeholder="{{ _('enter_barcode') }}" autofocus>
+                <button onclick="submitBarcode()">{{ _('add') }}</button>
             </div>
             <div class="info-box">
-                <strong>Active Scanner Devices:</strong>
+                <strong>{{ _('active_scanner_devices') }}:</strong>
                 {% if scanner_devices %}
                     <ul style="margin: 5px 0 0 20px;">
                     {% for device in scanner_devices %}
@@ -166,24 +206,57 @@
                     {% endfor %}
                     </ul>
                 {% else %}
-                    <span style="color: #f59e0b;">No devices detected yet (monitoring...)</span>
+                    <span style="color: #f59e0b;">{{ _('no_devices_detected') }}</span>
                 {% endif %}
                 <br>
-                <strong>Status:</strong> Waiting for scans...
+                <strong>{{ _('status') }}:</strong> {{ _('waiting_for_scans') }}
             </div>
         </div>
 
         <div class="card">
-            <h2>📋 Recent Scans</h2>
+            <h2>📋 {{ _('recent_scans') }}</h2>
             <div class="scan-list" id="scan-list">
                 <p style="text-align: center; color: #9ca3af; padding: 40px;">
-                    No scans yet. Scan a barcode to get started!
+                    {{ _('no_scans_yet') }}
                 </p>
             </div>
         </div>
     </div>
 
     <script>
+        // Translations for JavaScript
+        const translations = {
+            product_name: "{{ _('product_name') }}",
+            create_and_add: "{{ _('create_and_add') }}",
+            creating: "{{ _('creating') }}",
+            enter_product_name: "{{ _('enter_product_name') }}",
+            error: "{{ _('error') }}",
+            failed_to_create: "{{ _('failed_to_create') }}",
+            network_error: "{{ _('network_error') }}",
+            no_scans_yet: "{{ _('no_scans_yet') }}"
+        };
+
+        // Language switcher
+        function setLanguage(lang) {
+            fetch(`/api/language/${lang}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Language switch error:', error));
+        }
+
+        // Set active language button
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentLang = document.documentElement.lang;
+            const langBtn = document.getElementById(`lang-${currentLang}`);
+            if (langBtn) {
+                langBtn.classList.add('active');
+            }
+        });
+
         function submitBarcode() {
             console.log('submitBarcode called');
             const input = document.getElementById('barcode-input');
@@ -213,7 +286,7 @@
             const productName = input.value.trim();
 
             if (!productName) {
-                alert('Please enter a product name');
+                alert(translations.enter_product_name);
                 return;
             }
 
@@ -222,7 +295,7 @@
             const button = input.nextElementSibling;
             const originalButtonText = button.textContent;
             button.disabled = true;
-            button.textContent = 'Creating...';
+            button.textContent = translations.creating;
 
             fetch('api/create-product', {
                 method: 'POST',
@@ -240,7 +313,7 @@
                     // Reload scans to show the success message
                     loadScans();
                 } else {
-                    alert(`Error: ${data.error || 'Failed to create product'}`);
+                    alert(`${translations.error}: ${data.error || translations.failed_to_create}`);
                     // Re-enable input on error
                     input.disabled = false;
                     button.disabled = false;
@@ -249,7 +322,7 @@
             })
             .catch(error => {
                 console.error('Create product error:', error);
-                alert('Network error. Please try again.');
+                alert(translations.network_error);
                 // Re-enable input on error
                 input.disabled = false;
                 button.disabled = false;
@@ -274,7 +347,7 @@
                     const list = document.getElementById('scan-list');
 
                     if (scans.length === 0) {
-                        list.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 40px;">No scans yet. Scan a barcode to get started!</p>';
+                        list.innerHTML = `<p style="text-align: center; color: #9ca3af; padding: 40px;">${translations.no_scans_yet}</p>`;
                         return;
                     }
 
@@ -292,13 +365,13 @@
                                 <input
                                     type="text"
                                     id="product-name-${index}"
-                                    placeholder="Product name..."
+                                    placeholder="${translations.product_name}"
                                     style="flex: 1; padding: 8px; border: 2px solid #f59e0b; border-radius: 5px;"
                                 >
                                 <button
                                     onclick="createProduct('${scan.barcode}', ${index})"
                                     style="padding: 8px 20px; background: #10b981; white-space: nowrap;">
-                                    Create & Add
+                                    ${translations.create_and_add}
                                 </button>
                             </div>
                         ` : '';

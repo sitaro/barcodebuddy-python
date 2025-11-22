@@ -1,5 +1,6 @@
 """Main Flask application."""
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session
+from flask_babel import Babel, gettext
 import logging
 import sys
 from config import Config
@@ -19,6 +20,23 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'barcode-buddy-secret-key'  # For session management
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+# Initialize Babel
+babel = Babel(app)
+
+def get_locale():
+    """Determine the best match for supported languages."""
+    # Try to get language from session
+    if 'language' in session:
+        return session['language']
+    # Try to get from browser Accept-Language header
+    return request.accept_languages.best_match(['en', 'de', 'fr', 'es']) or 'en'
+
+babel.init_app(app, locale_selector=get_locale)
+
 config = Config()
 
 # Set debug mode
@@ -276,6 +294,14 @@ def status():
         'scanner_active': scanner.running,
         'scan_count': len(recent_scans)
     })
+
+@app.route('/api/language/<lang>')
+def set_language(lang):
+    """Set the user's preferred language."""
+    if lang in ['en', 'de', 'fr', 'es']:
+        session['language'] = lang
+        return jsonify({'success': True, 'language': lang})
+    return jsonify({'success': False, 'error': 'Unsupported language'}), 400
 
 @app.route('/api/create-product', methods=['POST'])
 def create_product():

@@ -1,0 +1,65 @@
+# Spanish translations for Barcode Buddy.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+
+msgid "barcode_buddy"
+msgstr "Barcode Buddy"
+
+msgid "grocy_connected"
+msgstr "Grocy Conectado"
+
+msgid "no_grocy"
+msgstr "Sin Grocy"
+
+msgid "scanner_active"
+msgstr "Escáner Activo"
+
+msgid "manual_scan"
+msgstr "Escaneo Manual"
+
+msgid "enter_barcode"
+msgstr "Introducir código de barras o escanear..."
+
+msgid "add"
+msgstr "Agregar"
+
+msgid "active_scanner_devices"
+msgstr "Dispositivos de Escáner Activos"
+
+msgid "no_devices_detected"
+msgstr "Aún no se detectaron dispositivos (monitoreando...)"
+
+msgid "status"
+msgstr "Estado"
+
+msgid "waiting_for_scans"
+msgstr "Esperando escaneos..."
+
+msgid "recent_scans"
+msgstr "Escaneos Recientes"
+
+msgid "no_scans_yet"
+msgstr "Aún no hay escaneos. ¡Escanea un código de barras para comenzar!"
+
+msgid "product_name"
+msgstr "Nombre del producto..."
+
+msgid "create_and_add"
+msgstr "Crear y Agregar"
+
+msgid "creating"
+msgstr "Creando..."
+
+msgid "enter_product_name"
+msgstr "Por favor ingrese un nombre de producto"
+
+msgid "error"
+msgstr "Error"
+
+msgid "failed_to_create"
+msgstr "No se pudo crear el producto"
+
+msgid "network_error"
+msgstr "Error de red. Por favor intente de nuevo."
