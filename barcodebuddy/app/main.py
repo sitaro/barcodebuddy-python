@@ -231,7 +231,7 @@ def index():
     """Main page."""
     return render_template('index.html',
                          has_grocy=config.has_grocy,
-                         scanner_device=config.scanner_device)
+                         scanner_devices=scanner.active_devices)
 
 @app.route('/api/scans')
 def get_scans():
@@ -256,7 +256,7 @@ def status():
     return jsonify({
         'grocy_configured': config.has_grocy,
         'grocy_connected': grocy_client is not None,
-        'scanner_device': config.scanner_device,
+        'scanner_devices': scanner.active_devices,
         'scanner_active': scanner.running,
         'scan_count': len(recent_scans)
     })

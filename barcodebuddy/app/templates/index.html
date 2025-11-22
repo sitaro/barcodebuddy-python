@@ -158,7 +158,17 @@
                 <button onclick="submitBarcode()">Add</button>
             </div>
             <div class="info-box">
-                <strong>Scanner Device:</strong> {{ scanner_device }}<br>
+                <strong>Active Scanner Devices:</strong>
+                {% if scanner_devices %}
+                    <ul style="margin: 5px 0 0 20px;">
+                    {% for device in scanner_devices %}
+                        <li>{{ device }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <span style="color: #f59e0b;">No devices detected yet (monitoring...)</span>
+                {% endif %}
+                <br>
                 <strong>Status:</strong> Waiting for scans...
             </div>
         </div>
