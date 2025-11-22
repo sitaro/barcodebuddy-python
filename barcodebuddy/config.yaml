@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python) (beta)"
-version: "2.11.1-beta"
+version: "2.11.2-beta"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -75,7 +75,11 @@ schema:
   enable_upcdatabase: bool
 
   # Language
-  language: select(en|de|fr|es)
+  language:
+    - en
+    - de
+    - fr
+    - es
 
   # Debug Mode
   debug: bool
