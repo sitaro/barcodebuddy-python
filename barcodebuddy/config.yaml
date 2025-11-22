@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python) (beta)"
-version: "2.7.0-beta"
+version: "2.7.1-beta"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
