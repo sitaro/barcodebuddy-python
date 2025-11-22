@@ -207,6 +207,56 @@
             .catch(error => console.error('Fetch error:', error));
         }
 
+        function createProduct(barcode, index) {
+            console.log('createProduct called for barcode:', barcode);
+            const input = document.getElementById(`product-name-${index}`);
+            const productName = input.value.trim();
+
+            if (!productName) {
+                alert('Please enter a product name');
+                return;
+            }
+
+            // Disable input and button while processing
+            input.disabled = true;
+            const button = input.nextElementSibling;
+            const originalButtonText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Creating...';
+
+            fetch('api/create-product', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    barcode: barcode,
+                    product_name: productName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Create product response:', data);
+                if (data.success) {
+                    console.log(`Product created: ${data.product_name}`);
+                    // Reload scans to show the success message
+                    loadScans();
+                } else {
+                    alert(`Error: ${data.error || 'Failed to create product'}`);
+                    // Re-enable input on error
+                    input.disabled = false;
+                    button.disabled = false;
+                    button.textContent = originalButtonText;
+                }
+            })
+            .catch(error => {
+                console.error('Create product error:', error);
+                alert('Network error. Please try again.');
+                // Re-enable input on error
+                input.disabled = false;
+                button.disabled = false;
+                button.textContent = originalButtonText;
+            });
+        }
+
         function loadScans() {
             fetch('api/scans')
                 .then(response => response.json())
@@ -218,7 +268,7 @@
                         return;
                     }
 
-                    list.innerHTML = scans.map(scan => {
+                    list.innerHTML = scans.map((scan, index) => {
                         const time = new Date(scan.timestamp).toLocaleTimeString();
                         const emoji = scan.status === 'success' ? '✅' :
                                     scan.status === 'error' ? '❌' :
@@ -226,14 +276,32 @@
                                     scan.status === 'quantity' ? '🔢' :
                                     scan.status === 'mode' ? '🔄' : '📦';
 
+                        // Show input field for not_found status
+                        const createProductForm = scan.status === 'not_found' ? `
+                            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                <input
+                                    type="text"
+                                    id="product-name-${index}"
+                                    placeholder="Product name..."
+                                    style="flex: 1; padding: 8px; border: 2px solid #f59e0b; border-radius: 5px;"
+                                >
+                                <button
+                                    onclick="createProduct('${scan.barcode}', ${index})"
+                                    style="padding: 8px 20px; background: #10b981; white-space: nowrap;">
+                                    Create & Add
+                                </button>
+                            </div>
+                        ` : '';
+
                         return `
                             <div class="scan-item">
-                                <div>
+                                <div style="width: 100%;">
                                     <div>
                                         <span class="emoji">${emoji}</span>
                                         <span class="scan-barcode">${scan.barcode}</span>
                                     </div>
                                     <div class="scan-message">${scan.message}</div>
+                                    ${createProductForm}
                                     <div class="scan-time">${time}</div>
                                 </div>
                             </div>

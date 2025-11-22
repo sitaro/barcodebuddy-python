@@ -261,6 +261,68 @@ def status():
         'scan_count': len(recent_scans)
     })
 
+@app.route('/api/create-product', methods=['POST'])
+def create_product():
+    """Create a new product with barcode and add to stock."""
+    global current_quantity, current_mode
+
+    data = request.get_json()
+    barcode = data.get('barcode', '').strip()
+    product_name = data.get('product_name', '').strip()
+
+    if not barcode or not product_name:
+        return jsonify({'success': False, 'error': 'Barcode and product name required'}), 400
+
+    if not grocy_client:
+        return jsonify({'success': False, 'error': 'Grocy not configured'}), 400
+
+    try:
+        # Create product in Grocy
+        product_id = grocy_client.create_product(product_name, description=f"Created via Barcode Buddy")
+        if not product_id:
+            return jsonify({'success': False, 'error': 'Failed to create product in Grocy'}), 500
+
+        # Add barcode to product
+        if not grocy_client.add_barcode_to_product(product_id, barcode):
+            logger.warning(f"Product created but failed to add barcode")
+
+        # Add to stock based on current mode
+        amount = current_quantity if current_quantity > 0 else 1.0
+
+        if current_mode == 'add':
+            success = grocy_client.add_product(product_id, amount)
+            action_text = "Added"
+        else:  # consume mode
+            success = grocy_client.consume_product(product_id, amount)
+            action_text = "Removed"
+
+        if success:
+            # Reset quantity after successful operation
+            current_quantity = 0.0
+
+            # Create scan result
+            scan_result = {
+                'barcode': barcode,
+                'timestamp': __import__('datetime').datetime.now().isoformat(),
+                'status': 'success',
+                'message': f"✨ Created '{product_name}' and {action_text.lower()} {amount}x to stock"
+            }
+
+            # Store in recent scans
+            recent_scans.insert(0, scan_result)
+            if len(recent_scans) > 50:
+                recent_scans.pop()
+
+            logger.info(f"✨ Created product '{product_name}' (ID: {product_id}) and {action_text.lower()} {amount}x")
+
+            return jsonify({'success': True, 'product_id': product_id, 'product_name': product_name})
+        else:
+            return jsonify({'success': False, 'error': f'Product created but failed to {action_text.lower()} to stock'}), 500
+
+    except Exception as e:
+        logger.error(f"Error creating product: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     logger.info("🚀 Starting Barcode Buddy (Python)")
     logger.info(f"📱 Scanner device: {config.scanner_device}")
