@@ -19,20 +19,66 @@ def generate_quantity_barcodes_pdf():
 
     # Title
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, height - 50, "Barcode Buddy - Quantity Barcodes")
+    c.drawString(50, height - 50, "Barcode Buddy - Control Barcodes")
 
     c.setFont("Helvetica", 12)
-    c.drawString(50, height - 70, "Scan these barcodes to set quantity before scanning products")
+    c.drawString(50, height - 70, "Scan these barcodes to control Barcode Buddy")
+
+    # Layout settings
+    left_margin = 50
+    right_column_x = width / 2 + 20
+    barcode_height = 50
+
+    # Section 1: Mode Barcodes (ADD/CONSUME)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 110, "Mode Control:")
+
+    mode_y = height - 140
+
+    # ADD mode barcode
+    try:
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(left_margin, mode_y + 10, "➕ ADD Mode")
+
+        barcode_obj = code128.Code128(
+            "BBUDDY-ADD",
+            barWidth=1.2,
+            barHeight=barcode_height,
+            humanReadable=True,
+            fontSize=10
+        )
+        barcode_obj.drawOn(c, left_margin, mode_y - barcode_height - 5)
+    except Exception as e:
+        c.setFont("Helvetica", 8)
+        c.drawString(left_margin, mode_y, f"Error: {str(e)[:50]}")
+
+    # CONSUME mode barcode
+    try:
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(right_column_x, mode_y + 10, "➖ CONSUME Mode")
+
+        barcode_obj = code128.Code128(
+            "BBUDDY-CONSUME",
+            barWidth=1.2,
+            barHeight=barcode_height,
+            humanReadable=True,
+            fontSize=10
+        )
+        barcode_obj.drawOn(c, right_column_x, mode_y - barcode_height - 5)
+    except Exception as e:
+        c.setFont("Helvetica", 8)
+        c.drawString(right_column_x, mode_y, f"Error: {str(e)[:50]}")
+
+    # Section 2: Quantity Barcodes
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, mode_y - 100, "Quantity Control:")
 
     # Define quantities to generate
     quantities = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30]
 
-    # Layout settings
-    start_y = height - 120
-    barcode_height = 50
+    # Layout settings for quantities
+    start_y = mode_y - 130
     spacing = 90
-    left_margin = 50
-    right_column_x = width / 2 + 20
 
     # Generate barcodes
     for idx, qty in enumerate(quantities):
