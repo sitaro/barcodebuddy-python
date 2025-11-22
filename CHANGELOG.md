@@ -5,6 +5,33 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2025-11-22
+
+### Added
+- **Product Creation UI**: Create products from unknown barcodes directly in the web interface
+- **Mode Switching**: Toggle between Add/Consume modes with special barcodes (BBUDDY-ADD / BBUDDY-CONSUME)
+- Configurable special barcode texts in add-on configuration (barcode_add, barcode_consume, barcode_quantity_prefix)
+- Input field appears for unknown barcodes to enter product name manually
+- Quantity barcode support (BBUDDY-Q-X) for setting quantities before scanning products
+
+### Changed
+- **Auto-detection** of all scanner devices (hidraw and input/event) - no configuration needed
+- Active scanner devices now displayed in UI
+- Enhanced UI responsiveness and refresh behavior
+- Removed unused scanner_device configuration option
+
+### Fixed
+- Auto-refresh pauses while typing product name
+- Product creation refresh issues resolved
+- Button state management during product creation
+
+## [2.6.0] - 2025-11-22
+
+### Added
+- MIT License
+- Configurable special barcode texts
+- Initial stable release with all features
+
 ## [2.4.0] - 2025-11-20
 
 ### Added
@@ -83,6 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Feature |
 |---------|------|-------------|
+| 2.8.0 | 2025-11-22 | Product Creation UI & Mode Switching |
+| 2.6.0 | 2025-11-22 | First Stable Release |
 | 2.4.0 | 2025-11-20 | Quantity Barcodes (BBUDDY-Q-X) |
 | 2.3.0 | 2025-11-20 | OpenFoodFacts Integration |
 | 2.2.0 | 2025-11-20 | Multi-Scanner Support |
