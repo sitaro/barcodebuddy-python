@@ -102,8 +102,11 @@ Datum: 22.11.2025</textarea>
     </div>
 
     <script>
+        // Get base URL (works with Ingress and direct access)
+        const baseUrl = window.location.pathname.replace(/\/$/, '');
+
         // Load status on page load
-        fetch('/api/status')
+        fetch(baseUrl + '/api/status')
             .then(r => r.json())
             .then(data => {
                 const grocy = data.grocy.connected ? '✅ Connected' : '❌ Not connected';
@@ -124,7 +127,7 @@ Datum: 22.11.2025</textarea>
 
             resultDiv.innerHTML = '⏳ Processing receipt...';
 
-            fetch('/api/process-receipt', {
+            fetch(baseUrl + '/api/process-receipt', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({

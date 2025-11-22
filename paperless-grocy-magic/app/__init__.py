@@ -1,2 +1,2 @@
 """Paperless Grocy Magic - Receipt Parser for Grocy."""
-__version__ = "0.2.5-beta"
+__version__ = "0.2.6-beta"
