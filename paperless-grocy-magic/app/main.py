@@ -132,7 +132,14 @@ Datum: 22.11.2025</textarea>
                     store: 'rewe'
                 })
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    return r.text().then(text => {
+                        throw new Error(`HTTP ${r.status}: ${text}`);
+                    });
+                }
+                return r.json();
+            })
             .then(data => {
                 // Format result nicely
                 let output = '';
@@ -227,27 +234,37 @@ def status():
 @app.route('/api/process-receipt', methods=['POST'])
 def process_receipt():
     """Process receipt text and update Grocy prices."""
+    logger.info("Received receipt processing request")
+
     if not price_updater:
+        logger.error("Price updater not initialized")
         return jsonify({
             'success': False,
             'error': 'Grocy not configured or connection failed'
         }), 503
 
-    data = request.get_json()
-    if not data or 'text' not in data:
-        return jsonify({
-            'success': False,
-            'error': 'Missing receipt text in request body'
-        }), 400
-
-    receipt_text = data.get('text')
-    store_hint = data.get('store', None)
-
     try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            logger.warning("Missing receipt text in request")
+            return jsonify({
+                'success': False,
+                'error': 'Missing receipt text in request body'
+            }), 400
+
+        receipt_text = data.get('text')
+        store_hint = data.get('store', None)
+
+        logger.info(f"Processing receipt for store: {store_hint}")
+
         result = price_updater.process_receipt_text(receipt_text, store_hint)
+
+        logger.info(f"Receipt processed: {result.updated_count} updated, {result.unmatched_count} unmatched")
+
         return jsonify(result.to_dict())
+
     except Exception as e:
-        logger.error(f"Error processing receipt: {e}")
+        logger.error(f"Error processing receipt: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
