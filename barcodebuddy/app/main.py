@@ -26,8 +26,8 @@ app.config['SECRET_KEY'] = 'barcode-buddy-secret-key'  # For session management
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
-# Initialize Babel
-babel = Babel(app)
+# Initialize Babel (will be configured after defining locale_selector)
+babel = Babel()
 
 def get_ha_language():
     """Get Home Assistant Core language setting."""
@@ -82,14 +82,16 @@ def get_locale():
     # Priority 4: Browser Accept-Language header (fallback)
     return request.accept_languages.best_match(['en', 'de', 'fr', 'es']) or 'en'
 
-babel.init_app(app, locale_selector=get_locale)
-
+# Load config first (before Babel, since get_locale() uses config)
 config = Config()
 
 # Set debug mode
 if config.debug:
     logging.getLogger().setLevel(logging.DEBUG)
     app.debug = True
+
+# Initialize Babel with locale selector (after config is loaded)
+babel.init_app(app, locale_selector=get_locale)
 
 # Initialize Grocy client
 grocy_client = None
