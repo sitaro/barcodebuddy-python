@@ -61,11 +61,6 @@ class Config:
         return self._config.get('enable_openfoodfacts', True)
 
     @property
-    def enable_eansearch(self) -> bool:
-        """Check if EAN-Search database is enabled."""
-        return self._config.get('enable_eansearch', True)
-
-    @property
     def enable_upcdatabase(self) -> bool:
         """Check if UPC Database is enabled."""
         return self._config.get('enable_upcdatabase', True)

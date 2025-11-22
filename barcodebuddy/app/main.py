@@ -6,7 +6,6 @@ from config import Config
 from grocy import GrocyClient
 from scanner import ScannerHandler
 from openfoodfacts import OpenFoodFactsClient
-from eansearch import EANSearchClient
 from upcdatabase import UPCDatabaseClient
 from datetime import datetime
 
@@ -41,7 +40,6 @@ else:
 
 # Initialize product database clients
 openfoodfacts_client = OpenFoodFactsClient()
-eansearch_client = EANSearchClient()
 upcdatabase_client = UPCDatabaseClient()
 
 # Store recent scans
@@ -174,7 +172,7 @@ def handle_barcode(barcode: str):
             # Step 2: Product not in Grocy - try external databases
             logger.info(f"🔍 Product not in Grocy, checking external databases...")
 
-            # Try databases in order: OpenFoodFacts → EAN-Search → UPC Database
+            # Try databases in order: OpenFoodFacts → UPC Database
             # Only query databases that are enabled in configuration
             external_product = None
             database_name = None
@@ -183,11 +181,6 @@ def handle_barcode(barcode: str):
                 external_product = openfoodfacts_client.lookup_barcode(barcode)
                 if external_product:
                     database_name = "OpenFoodFacts"
-
-            if config.enable_eansearch and not external_product:
-                external_product = eansearch_client.lookup_barcode(barcode)
-                if external_product:
-                    database_name = "EAN-Search"
 
             if config.enable_upcdatabase and not external_product:
                 external_product = upcdatabase_client.lookup_barcode(barcode)
@@ -234,7 +227,7 @@ def handle_barcode(barcode: str):
             else:
                 # Not found anywhere
                 scan_result['status'] = 'not_found'
-                scan_result['message'] = f"❓ Barcode not found in Grocy, OpenFoodFacts, EAN-Search, or UPC Database"
+                scan_result['message'] = f"❓ Barcode not found in Grocy, OpenFoodFacts, or UPC Database"
                 logger.warning(f"❓ Barcode {barcode} not found in any database")
     else:
         scan_result['status'] = 'no_grocy'

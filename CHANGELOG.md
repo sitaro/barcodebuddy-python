@@ -5,6 +5,16 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.4-beta] - 2025-11-22
+
+### Removed
+- **EAN-Search.org** database integration (requires paid API key - 401 Unauthorized errors)
+- `enable_eansearch` configuration option
+
+### Changed
+- Database lookup now only uses OpenFoodFacts and UPC Database (both free)
+- "Not found" message updated to reflect available databases
+
 ## [2.9.3-beta] - 2025-11-22
 
 ### Fixed
