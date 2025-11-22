@@ -214,3 +214,50 @@ class GrocyClient:
             error_msg = f"Exception creating product '{name}': {str(e)}"
             logger.error(error_msg, exc_info=True)
             return None, error_msg
+
+    def add_to_stock(self, product_id: int, amount: float = 1.0, price: float = None,
+                     best_before_days: int = 30) -> tuple[bool, str]:
+        """
+        Add product to stock (inventory).
+
+        Args:
+            product_id: Grocy product ID
+            amount: Quantity to add (default: 1.0)
+            price: Purchase price (optional, this is where Grocy stores prices!)
+            best_before_days: Days until best before date (default: 30)
+
+        Returns:
+            (success, error_message) tuple
+        """
+        try:
+            from datetime import datetime, timedelta
+
+            # Calculate best before date
+            best_before_date = (datetime.now() + timedelta(days=best_before_days)).strftime('%Y-%m-%d')
+
+            stock_data = {
+                'amount': amount,
+                'best_before_date': best_before_date
+            }
+
+            # Add price if provided (this is where Grocy stores purchase prices!)
+            if price is not None:
+                stock_data['price'] = str(price)
+
+            logger.debug(f"Adding to stock: product_id={product_id}, amount={amount}, price={price}")
+            logger.debug(f"Stock data: {stock_data}")
+
+            result = self._request('POST', f'/stock/products/{product_id}/add', json=stock_data)
+
+            if result is not None:  # Empty dict {} is also success
+                logger.info(f"Added {amount}x product {product_id} to stock (price: {price}€)")
+                return True, ""
+
+            error_msg = "Grocy API returned None for stock add"
+            logger.error(error_msg)
+            return False, error_msg
+
+        except Exception as e:
+            error_msg = f"Exception adding product {product_id} to stock: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            return False, error_msg

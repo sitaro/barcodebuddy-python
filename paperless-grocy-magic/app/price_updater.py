@@ -115,8 +115,21 @@ class PriceUpdateService:
             )
 
             if success:
-                result.updated_count += 1
-                logger.info(f"✅ Updated: {match.grocy_product.name} → {new_price:.2f}€")
+                # Add to stock with the new price
+                stock_success, stock_error = self.grocy.add_to_stock(
+                    product_id=product_id,
+                    amount=1.0,
+                    price=new_price
+                )
+
+                if stock_success:
+                    result.updated_count += 1
+                    logger.info(f"✅ Updated & added to stock: {match.grocy_product.name} → {new_price:.2f}€")
+                else:
+                    result.failed_count += 1
+                    error_msg = f"Updated {match.grocy_product.name} but failed to add to stock: {stock_error}"
+                    result.errors.append(error_msg)
+                    logger.error(f"⚠️  {error_msg}")
             else:
                 result.failed_count += 1
                 error_msg = f"Failed to update {match.grocy_product.name}: {error}"
@@ -133,15 +146,28 @@ class PriceUpdateService:
             )
 
             if new_product:
-                result.created_count += 1
-                logger.info(f"✨ Created: {new_product.name} ({item.price:.2f}€)")
+                # Add to stock with price
+                stock_success, stock_error = self.grocy.add_to_stock(
+                    product_id=new_product.id,
+                    amount=1.0,
+                    price=item.price
+                )
 
-                # Update the match object to reflect creation
-                for match in matches:
-                    if match.receipt_item == item:
-                        match.grocy_product = new_product
-                        match.was_created = True
-                        break
+                if stock_success:
+                    result.created_count += 1
+                    logger.info(f"✨ Created & added to stock: {new_product.name} ({item.price:.2f}€)")
+
+                    # Update the match object to reflect creation
+                    for match in matches:
+                        if match.receipt_item == item:
+                            match.grocy_product = new_product
+                            match.was_created = True
+                            break
+                else:
+                    result.unmatched_count += 1
+                    error_msg = f"Created {item.name} but failed to add to stock: {stock_error}"
+                    result.errors.append(error_msg)
+                    logger.error(f"⚠️  {error_msg}")
             else:
                 result.unmatched_count += 1
                 error_msg = f"Failed to create {item.name}: {error}"

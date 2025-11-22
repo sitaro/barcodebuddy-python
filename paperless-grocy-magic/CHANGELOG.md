@@ -5,6 +5,33 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6-beta] - 2025-11-22
+
+### Added
+- **Stock management** - Products are now automatically added to inventory!
+- New `add_to_stock()` method in GrocyClient
+- Purchases from receipts are recorded with prices in Grocy
+- Default: 1 unit added to stock per receipt item
+- Best-before date: 30 days from purchase (configurable)
+
+### Changed
+- After creating a product, it's automatically added to stock
+- After updating a product, it's added to stock with new price
+- Price is now properly stored via stock API (not product table)
+- Log messages: "Created & added to stock" / "Updated & added to stock"
+
+### How it works
+1. Parse receipt → Match/create products
+2. **NEW:** Add matched products to stock with price
+3. **NEW:** Add created products to stock with price
+4. Grocy now tracks: product + quantity + price + purchase date
+
+Example:
+- Receipt: "Vorderhaxe 7.98€"
+- ✨ Creates product "Vorderhaxe"
+- 📦 Adds 1x to stock with price 7.98€
+- Best-before: 30 days from today
+
 ## [0.3.5-beta] - 2025-11-22
 
 ### Fixed
