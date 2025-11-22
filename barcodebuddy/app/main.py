@@ -268,7 +268,8 @@ def index():
     """Main page."""
     return render_template('index.html',
                          has_grocy=config.has_grocy,
-                         scanner_devices=scanner.active_devices)
+                         scanner_devices=scanner.active_devices,
+                         current_locale=get_locale())
 
 @app.route('/api/scans')
 def get_scans():

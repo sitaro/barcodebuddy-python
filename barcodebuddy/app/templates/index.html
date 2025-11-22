@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -250,7 +250,7 @@
 
         // Set active language button
         document.addEventListener('DOMContentLoaded', function() {
-            const currentLang = document.documentElement.lang;
+            const currentLang = "{{ current_locale }}";
             const langBtn = document.getElementById(`lang-${currentLang}`);
             if (langBtn) {
                 langBtn.classList.add('active');
