@@ -74,7 +74,7 @@ def generate_quantity_barcodes_pdf():
     c.drawString(50, mode_y - 100, "Quantity Control:")
 
     # Define quantities to generate
-    quantities = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30]
+    quantities = [3, 4, 5, 6, 7, 8, 9, 10, 20, 30]
 
     # Layout settings for quantities
     start_y = mode_y - 130
