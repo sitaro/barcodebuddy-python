@@ -175,19 +175,21 @@ def handle_barcode(barcode: str):
             logger.info(f"🔍 Product not in Grocy, checking external databases...")
 
             # Try databases in order: OpenFoodFacts → EAN-Search → UPC Database
+            # Only query databases that are enabled in configuration
             external_product = None
             database_name = None
 
-            external_product = openfoodfacts_client.lookup_barcode(barcode)
-            if external_product:
-                database_name = "OpenFoodFacts"
+            if config.enable_openfoodfacts and not external_product:
+                external_product = openfoodfacts_client.lookup_barcode(barcode)
+                if external_product:
+                    database_name = "OpenFoodFacts"
 
-            if not external_product:
+            if config.enable_eansearch and not external_product:
                 external_product = eansearch_client.lookup_barcode(barcode)
                 if external_product:
                     database_name = "EAN-Search"
 
-            if not external_product:
+            if config.enable_upcdatabase and not external_product:
                 external_product = upcdatabase_client.lookup_barcode(barcode)
                 if external_product:
                     database_name = "UPC Database"

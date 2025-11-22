@@ -5,6 +5,17 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.2-beta] - 2025-11-22
+
+### Added
+- **Configurable Product Databases**: Enable/disable individual online databases via add-on configuration
+- Configuration options: `enable_openfoodfacts`, `enable_eansearch`, `enable_upcdatabase`
+- All databases enabled by default for maximum barcode coverage
+
+### Changed
+- Database queries now respect configuration settings (only enabled databases are queried)
+- Improved efficiency by skipping disabled databases
+
 ## [2.9.1-beta] - 2025-11-22
 
 ### Added

@@ -54,3 +54,18 @@ class Config:
     def barcode_quantity_prefix(self) -> str:
         """Get quantity barcode prefix."""
         return self._config.get('barcode_quantity_prefix', 'BBUDDY-Q-')
+
+    @property
+    def enable_openfoodfacts(self) -> bool:
+        """Check if OpenFoodFacts database is enabled."""
+        return self._config.get('enable_openfoodfacts', True)
+
+    @property
+    def enable_eansearch(self) -> bool:
+        """Check if EAN-Search database is enabled."""
+        return self._config.get('enable_eansearch', True)
+
+    @property
+    def enable_upcdatabase(self) -> bool:
+        """Check if UPC Database is enabled."""
+        return self._config.get('enable_upcdatabase', True)
