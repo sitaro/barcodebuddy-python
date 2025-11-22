@@ -30,39 +30,40 @@ app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 babel = Babel()
 
 def get_ha_language():
-    """Get Home Assistant Core language setting."""
+    """Get Home Assistant language setting via Ingress headers."""
     try:
-        # Try to get HA language from Supervisor API
+        # Try to get language from X-Ingress-Path header (set by HA Ingress)
+        ingress_path = request.headers.get('X-Ingress-Path')
+        logger.info(f"X-Ingress-Path header: {ingress_path}")
+
+        # Also try other headers that might contain language info
+        accept_lang = request.headers.get('Accept-Language')
+        logger.info(f"Accept-Language header: {accept_lang}")
+
+        # Try Supervisor API as fallback (but it might not work)
         supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        logger.info(f"SUPERVISOR_TOKEN present: {bool(supervisor_token)}")
         if supervisor_token:
+            # Try /supervisor/info instead of /core/info
             response = requests.get(
-                'http://supervisor/core/info',
+                'http://supervisor/supervisor/info',
                 headers={'Authorization': f'Bearer {supervisor_token}'},
                 timeout=2
             )
-            logger.info(f"Supervisor API status: {response.status_code}")
+            logger.info(f"Supervisor API (/supervisor/info) status: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"Supervisor API response: {data}")
-                ha_lang = data.get('data', {}).get('language', 'en')
-                logger.info(f"HA language from API: {ha_lang}")
-                # Map HA language codes to our supported languages
-                lang_map = {
-                    'en': 'en',
-                    'de': 'de',
-                    'fr': 'fr',
-                    'es': 'es',
-                    'en-US': 'en',
-                    'de-DE': 'de',
-                    'fr-FR': 'fr',
-                    'es-ES': 'es'
-                }
-                mapped_lang = lang_map.get(ha_lang, 'en')
-                logger.info(f"Mapped language: {mapped_lang}")
-                return mapped_lang
-            else:
-                logger.warning(f"Supervisor API returned {response.status_code}: {response.text}")
+                logger.info(f"Supervisor info response: {data}")
+                # Check if language is in the response
+                ha_lang = data.get('data', {}).get('language')
+                if ha_lang:
+                    logger.info(f"HA language from Supervisor API: {ha_lang}")
+                    lang_map = {
+                        'en': 'en', 'de': 'de', 'fr': 'fr', 'es': 'es',
+                        'en-US': 'en', 'de-DE': 'de', 'fr-FR': 'fr', 'es-ES': 'es'
+                    }
+                    mapped_lang = lang_map.get(ha_lang, 'en')
+                    logger.info(f"Mapped language: {mapped_lang}")
+                    return mapped_lang
     except Exception as e:
         logger.error(f"Could not get HA language: {e}")
     return None
