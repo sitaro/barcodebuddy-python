@@ -11,7 +11,7 @@ RUN apk add --no-cache \
         requests \
         python-dateutil \
         fuzzywuzzy \
-        pdfplumber
+        PyPDF2
 
 # Copy application files
 COPY run.sh /

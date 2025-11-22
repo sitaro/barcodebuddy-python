@@ -5,6 +5,22 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1-beta] - 2025-11-22
+
+### Changed
+- **Switched from pdfplumber to PyPDF2** - Faster Docker builds!
+- PyPDF2 is pure Python (no compilation needed)
+- Fixes hanging/slow updates on ARM architectures
+- Build time: ~30 seconds instead of 5-15 minutes
+- Same functionality, lighter dependencies
+
+### Technical Details
+- pdfplumber requires Pillow (image processing library)
+- Pillow compilation is very slow on ARM (armv7, aarch64)
+- PyPDF2 is pure Python, no C extensions
+- Both extract text from PDFs with text layer
+- PyPDF2 API: `PdfReader` instead of `pdfplumber.open()`
+
 ## [0.4.0-beta] - 2025-11-22
 
 ### Added

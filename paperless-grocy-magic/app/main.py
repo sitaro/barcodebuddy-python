@@ -336,20 +336,22 @@ def extract_pdf():
                 'error': 'Only PDF files are supported'
             }), 400
 
-        # Extract text from PDF
+        # Extract text from PDF using PyPDF2 (lighter than pdfplumber)
         import io
-        import pdfplumber
+        from PyPDF2 import PdfReader
 
         pdf_bytes = file.read()
         text_content = ""
 
-        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-            logger.info(f"PDF has {len(pdf.pages)} pages")
-            for page_num, page in enumerate(pdf.pages, 1):
-                page_text = page.extract_text()
-                if page_text:
-                    text_content += page_text + "\n"
-                    logger.debug(f"Page {page_num}: {len(page_text)} chars")
+        pdf_reader = PdfReader(io.BytesIO(pdf_bytes))
+        num_pages = len(pdf_reader.pages)
+        logger.info(f"PDF has {num_pages} pages")
+
+        for page_num, page in enumerate(pdf_reader.pages, 1):
+            page_text = page.extract_text()
+            if page_text:
+                text_content += page_text + "\n"
+                logger.debug(f"Page {page_num}: {len(page_text)} chars")
 
         if not text_content.strip():
             return jsonify({
@@ -362,7 +364,7 @@ def extract_pdf():
         return jsonify({
             'success': True,
             'text': text_content,
-            'pages': len(pdf.pages) if 'pdf' in locals() else 0,
+            'pages': num_pages,
             'chars': len(text_content)
         })
 
