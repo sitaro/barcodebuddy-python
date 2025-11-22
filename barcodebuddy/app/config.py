@@ -66,13 +66,10 @@ class Config:
         return self._config.get('enable_upcdatabase', True)
 
     @property
-    def language(self) -> Optional[str]:
-        """Get configured language ('auto' = auto-detect)."""
-        lang = self._config.get('language', 'auto').strip()
-        # Return None for auto-detect, otherwise return the language code
-        if lang == 'auto' or not lang:
-            return None
+    def language(self) -> str:
+        """Get configured language."""
+        lang = self._config.get('language', 'de').strip()
         # Validate language code
         if lang in ['en', 'de', 'fr', 'es']:
             return lang
-        return None
+        return 'de'  # Default fallback

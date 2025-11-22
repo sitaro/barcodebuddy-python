@@ -5,6 +5,19 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0-beta] - 2025-11-22
+
+### Changed
+- **Simplified Language Selection**: Removed "Auto Detect" option
+- Language now configured via dropdown in add-on settings (en/de/fr/es)
+- Default language set to German (de)
+- Removed language auto-detection code (Accept-Language, Supervisor API)
+- Removed `/api/language` and `/api/debug-language` endpoints
+
+### Removed
+- Auto-detection of language from browser or Home Assistant Core
+- Session-based language switching
+
 ## [2.10.6-beta] - 2025-11-22
 
 ### Changed
