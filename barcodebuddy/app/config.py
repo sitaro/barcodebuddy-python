@@ -68,8 +68,8 @@ class Config:
     @property
     def language(self) -> str:
         """Get configured language."""
-        lang = self._config.get('language', 'de').strip()
+        lang = self._config.get('language', 'en').strip()
         # Validate language code
         if lang in ['en', 'de', 'fr', 'es']:
             return lang
-        return 'de'  # Default fallback
+        return 'en'  # Default fallback
