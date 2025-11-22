@@ -34,15 +34,19 @@ def get_ha_language():
     try:
         # Try to get HA language from Supervisor API
         supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        logger.info(f"SUPERVISOR_TOKEN present: {bool(supervisor_token)}")
         if supervisor_token:
             response = requests.get(
                 'http://supervisor/core/info',
                 headers={'Authorization': f'Bearer {supervisor_token}'},
                 timeout=2
             )
+            logger.info(f"Supervisor API status: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
+                logger.info(f"Supervisor API response: {data}")
                 ha_lang = data.get('data', {}).get('language', 'en')
+                logger.info(f"HA language from API: {ha_lang}")
                 # Map HA language codes to our supported languages
                 lang_map = {
                     'en': 'en',
@@ -54,9 +58,13 @@ def get_ha_language():
                     'fr-FR': 'fr',
                     'es-ES': 'es'
                 }
-                return lang_map.get(ha_lang, 'en')
+                mapped_lang = lang_map.get(ha_lang, 'en')
+                logger.info(f"Mapped language: {mapped_lang}")
+                return mapped_lang
+            else:
+                logger.warning(f"Supervisor API returned {response.status_code}: {response.text}")
     except Exception as e:
-        logger.debug(f"Could not get HA language: {e}")
+        logger.error(f"Could not get HA language: {e}")
     return None
 
 def get_locale():
