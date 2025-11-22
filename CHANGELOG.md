@@ -5,6 +5,13 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.5-beta] - 2025-11-22
+
+### Fixed
+- **Critical**: Added `hassio_api: true` to config.yaml to grant Supervisor API access
+- Fixes 403 Forbidden error when accessing Home Assistant Core language settings
+- Language auto-detection from HA Core now has proper permissions
+
 ## [2.10.4-beta] - 2025-11-22
 
 ### Fixed
