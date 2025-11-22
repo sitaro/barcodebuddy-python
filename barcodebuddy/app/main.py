@@ -3,6 +3,8 @@ from flask import Flask, render_template, jsonify, request, session
 from flask_babel import Babel, gettext
 import logging
 import sys
+import os
+import requests
 from config import Config
 from grocy import GrocyClient
 from scanner import ScannerHandler
@@ -27,6 +29,36 @@ app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 # Initialize Babel
 babel = Babel(app)
 
+def get_ha_language():
+    """Get Home Assistant Core language setting."""
+    try:
+        # Try to get HA language from Supervisor API
+        supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        if supervisor_token:
+            response = requests.get(
+                'http://supervisor/core/info',
+                headers={'Authorization': f'Bearer {supervisor_token}'},
+                timeout=2
+            )
+            if response.status_code == 200:
+                data = response.json()
+                ha_lang = data.get('data', {}).get('language', 'en')
+                # Map HA language codes to our supported languages
+                lang_map = {
+                    'en': 'en',
+                    'de': 'de',
+                    'fr': 'fr',
+                    'es': 'es',
+                    'en-US': 'en',
+                    'de-DE': 'de',
+                    'fr-FR': 'fr',
+                    'es-ES': 'es'
+                }
+                return lang_map.get(ha_lang, 'en')
+    except Exception as e:
+        logger.debug(f"Could not get HA language: {e}")
+    return None
+
 def get_locale():
     """Determine the best match for supported languages."""
     # Priority 1: Config file (for debugging/forcing language)
@@ -35,7 +67,11 @@ def get_locale():
     # Priority 2: Session (user clicked language switcher)
     if 'language' in session:
         return session['language']
-    # Priority 3: Browser Accept-Language header (auto-detect)
+    # Priority 3: Home Assistant Core language (auto-detect)
+    ha_lang = get_ha_language()
+    if ha_lang:
+        return ha_lang
+    # Priority 4: Browser Accept-Language header (fallback)
     return request.accept_languages.best_match(['en', 'de', 'fr', 'es']) or 'en'
 
 babel.init_app(app, locale_selector=get_locale)
