@@ -1,11 +1,15 @@
 """Main Flask application."""
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session
+from flask_babel import Babel, gettext
 import logging
 import sys
+import os
+import requests
 from config import Config
 from grocy import GrocyClient
 from scanner import ScannerHandler
 from openfoodfacts import OpenFoodFactsClient
+from upcdatabase import UPCDatabaseClient
 from datetime import datetime
 
 # Setup logging
@@ -18,12 +22,28 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'barcode-buddy-secret-key'  # For session management
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+# Initialize Babel (will be configured after defining locale_selector)
+babel = Babel()
+
+def get_locale():
+    """Get the configured language from config."""
+    # Simply return the configured language (always set, no auto-detection)
+    return config.language
+
+# Load config first (before Babel, since get_locale() uses config)
 config = Config()
 
 # Set debug mode
 if config.debug:
     logging.getLogger().setLevel(logging.DEBUG)
     app.debug = True
+
+# Initialize Babel with locale selector (after config is loaded)
+babel.init_app(app, locale_selector=get_locale)
 
 # Initialize Grocy client
 grocy_client = None
@@ -37,8 +57,9 @@ if config.has_grocy:
 else:
     logger.info("ℹ️  No Grocy configuration - running in standalone mode")
 
-# Initialize OpenFoodFacts client
+# Initialize product database clients
 openfoodfacts_client = OpenFoodFactsClient()
+upcdatabase_client = UPCDatabaseClient()
 
 # Store recent scans
 recent_scans = []
@@ -167,16 +188,30 @@ def handle_barcode(barcode: str):
                 scan_result['status'] = 'error'
                 scan_result['message'] = f"❌ Error reading product info"
         else:
-            # Step 2: Product not in Grocy - try OpenFoodFacts
-            logger.info(f"🔍 Product not in Grocy, checking OpenFoodFacts...")
-            off_product = openfoodfacts_client.lookup_barcode(barcode)
+            # Step 2: Product not in Grocy - try external databases
+            logger.info(f"🔍 Product not in Grocy, checking external databases...")
 
-            if off_product:
-                # Step 3: Found in OpenFoodFacts - create in Grocy
-                product_name = off_product['name']
-                description = f"{off_product.get('brand', '')} - {off_product.get('quantity', '')}".strip(' -')
+            # Try databases in order: OpenFoodFacts → UPC Database
+            # Only query databases that are enabled in configuration
+            external_product = None
+            database_name = None
 
-                logger.info(f"🆕 Creating new product: {product_name}")
+            if config.enable_openfoodfacts and not external_product:
+                external_product = openfoodfacts_client.lookup_barcode(barcode)
+                if external_product:
+                    database_name = "OpenFoodFacts"
+
+            if config.enable_upcdatabase and not external_product:
+                external_product = upcdatabase_client.lookup_barcode(barcode)
+                if external_product:
+                    database_name = "UPC Database"
+
+            if external_product:
+                # Step 3: Found in external database - create in Grocy
+                product_name = external_product['name']
+                description = f"{external_product.get('brand', '')} - {external_product.get('quantity', '')}".strip(' -')
+
+                logger.info(f"🆕 Creating new product from {database_name}: {product_name}")
                 product_id = grocy_client.create_product(product_name, description)
 
                 if product_id:
@@ -196,8 +231,8 @@ def handle_barcode(barcode: str):
                         if success:
                             quantity_text = f" ({amount}x)" if amount != 1 else ""
                             scan_result['status'] = 'success'
-                            scan_result['message'] = f"🆕 Created & {action_text}: {product_name}{quantity_text}"
-                            logger.info(f"🆕 Successfully created and {action_text.lower()}: {product_name} (quantity: {amount})")
+                            scan_result['message'] = f"🆕 Created from {database_name} & {action_text}: {product_name}{quantity_text}"
+                            logger.info(f"🆕 Successfully created from {database_name} and {action_text.lower()}: {product_name} (quantity: {amount})")
                             current_quantity = 0.0  # Reset after successful operation
                         else:
                             scan_result['status'] = 'warning'
@@ -211,7 +246,7 @@ def handle_barcode(barcode: str):
             else:
                 # Not found anywhere
                 scan_result['status'] = 'not_found'
-                scan_result['message'] = f"❓ Barcode not found in Grocy or OpenFoodFacts"
+                scan_result['message'] = f"❓ Barcode not found in Grocy, OpenFoodFacts, or UPC Database"
                 logger.warning(f"❓ Barcode {barcode} not found in any database")
     else:
         scan_result['status'] = 'no_grocy'
@@ -231,7 +266,8 @@ def index():
     """Main page."""
     return render_template('index.html',
                          has_grocy=config.has_grocy,
-                         scanner_devices=scanner.active_devices)
+                         scanner_devices=scanner.active_devices,
+                         current_locale=get_locale())
 
 @app.route('/api/scans')
 def get_scans():

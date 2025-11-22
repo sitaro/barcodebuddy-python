@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python)"
-version: "2.8.0"
+version: "2.9.0"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -11,6 +11,8 @@ arch:
 startup: application
 boot: auto
 init: false
+hassio_api: true
+hassio_role: default
 
 # USB-Scanner Zugriff - Multiple scanners supported!
 devices:
@@ -39,17 +41,41 @@ ingress_port: 5000
 ingress_entry: "/"
 
 options:
+  # Grocy Integration
   grocy_url: ""
   grocy_api_key: ""
-  debug: false
+
+  # Barcode Configuration
   barcode_add: "BBUDDY-ADD"
   barcode_consume: "BBUDDY-CONSUME"
   barcode_quantity_prefix: "BBUDDY-Q-"
 
+  # Product Databases (for unknown barcodes)
+  enable_openfoodfacts: true
+  enable_upcdatabase: true
+
+  # Language
+  language: "en"
+
+  # Debug Mode
+  debug: false
+
 schema:
+  # Grocy Integration
   grocy_url: str
   grocy_api_key: str
-  debug: bool
+
+  # Barcode Configuration
   barcode_add: str
   barcode_consume: str
   barcode_quantity_prefix: str
+
+  # Product Databases
+  enable_openfoodfacts: bool
+  enable_upcdatabase: bool
+
+  # Language (en/de/fr/es)
+  language: str
+
+  # Debug Mode
+  debug: bool
