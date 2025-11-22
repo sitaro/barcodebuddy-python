@@ -74,7 +74,7 @@ schema:
   language: str
 
   # Barcode Format (code128/qr)
-  barcode_format: str
+  barcode_format: list(code128|qr)
 
   # Debug Mode
   debug: bool
