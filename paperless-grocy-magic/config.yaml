@@ -1,5 +1,5 @@
 name: "Paperless Grocy Magic"
-version: "0.3.1-beta"
+version: "0.3.2-beta"
 slug: "paperless-grocy-magic"
 description: "Parse receipts from Paperless-ngx and sync prices to Grocy"
 arch:

@@ -54,10 +54,20 @@ class GrocyClient:
 
     def test_connection(self) -> bool:
         """Test connection to Grocy API."""
+        # Try /system/info first
         result = self._request('GET', '/system/info')
         if result:
             logger.info(f"Connected to Grocy {result.get('grocy_version', {}).get('Version', 'unknown')}")
             return True
+
+        # Fallback: Try to get products as connection test
+        logger.warning("/system/info failed, trying /objects/products as fallback...")
+        result = self._request('GET', '/objects/products')
+        if result is not None:  # Even empty list is success
+            logger.info(f"Connected to Grocy (via /objects/products, {len(result)} products)")
+            return True
+
+        logger.error("Both connection tests failed")
         return False
 
     def get_all_products(self) -> List[GrocyProduct]:

@@ -5,6 +5,20 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2-beta] - 2025-11-22
+
+### Fixed
+- **Grocy connection test** - Fixed "Expecting value" error with /system/info
+- Added fallback to /objects/products for connection testing
+- Works with Grocy instances that don't have /system/info endpoint
+- More robust connection detection
+
+### Technical Details
+- Some Grocy versions/configurations don't return valid JSON from /system/info
+- Now tries /system/info first, falls back to /objects/products
+- Both methods validate Grocy API is accessible
+- Logs which method was successful
+
 ## [0.3.1-beta] - 2025-11-22
 
 ### Fixed
