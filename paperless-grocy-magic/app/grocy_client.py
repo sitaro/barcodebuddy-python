@@ -96,73 +96,100 @@ class GrocyClient:
             return GrocyProduct(data)
         return None
 
-    def update_product_price(self, product_id: int, price: float, store: str = None) -> bool:
-        """Update product price in Grocy."""
-        # Get current product data
-        product = self.get_product(product_id)
-        if not product:
-            logger.error(f"Product {product_id} not found")
-            return False
+    def update_product_price(self, product_id: int, price: float, store: str = None) -> tuple[bool, str]:
+        """Update product price in Grocy. Returns (success, error_message)."""
+        try:
+            # Get current product data
+            product = self.get_product(product_id)
+            if not product:
+                error_msg = f"Product {product_id} not found in Grocy"
+                logger.error(error_msg)
+                return False, error_msg
 
-        # Update price
-        update_data = {
-            'price': str(price)  # Grocy expects string
-        }
+            # Update price
+            update_data = {
+                'price': str(price)  # Grocy expects string
+            }
 
-        # Add store to description if provided
-        if store:
-            desc = product.description or ""
-            price_info = f"Preis: {price:.2f}€ ({store})"
+            # Add store to description if provided
+            if store:
+                desc = product.description or ""
+                price_info = f"Preis: {price:.2f}€ ({store})"
 
-            # Check if description already has price info
-            if "Preis:" in desc:
-                # Replace existing price info
-                import re
-                desc = re.sub(r'Preis:.*?€\s*\([^)]+\)', price_info, desc)
-            else:
-                # Append price info
-                desc = f"{desc}\n{price_info}".strip()
+                # Check if description already has price info
+                if "Preis:" in desc:
+                    # Replace existing price info
+                    import re
+                    desc = re.sub(r'Preis:.*?€\s*\([^)]+\)', price_info, desc)
+                else:
+                    # Append price info
+                    desc = f"{desc}\n{price_info}".strip()
 
-            update_data['description'] = desc
+                update_data['description'] = desc
 
-        result = self._request('PUT', f'/objects/products/{product_id}', json=update_data)
+            result = self._request('PUT', f'/objects/products/{product_id}', json=update_data)
 
-        if result:
-            logger.info(f"Updated price for product {product_id} ({product.name}): {price:.2f}€")
-            return True
+            if result:
+                logger.info(f"Updated price for product {product_id} ({product.name}): {price:.2f}€")
+                return True, ""
 
-        return False
+            error_msg = "Grocy API returned empty response"
+            logger.error(error_msg)
+            return False, error_msg
 
-    def create_product(self, name: str, price: float = 0.0, barcode: str = None) -> Optional[GrocyProduct]:
-        """Create a new product in Grocy."""
-        # Get default location and quantity unit
-        locations = self._request('GET', '/objects/locations')
-        qu_units = self._request('GET', '/objects/quantity_units')
+        except Exception as e:
+            error_msg = f"Exception updating product: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            return False, error_msg
 
-        if not locations or not qu_units:
-            logger.error("Could not get locations or quantity units")
-            return None
+    def create_product(self, name: str, price: float = 0.0, barcode: str = None) -> tuple[Optional[GrocyProduct], str]:
+        """Create a new product in Grocy. Returns (product, error_message)."""
+        try:
+            # Get default location and quantity unit
+            logger.debug(f"Fetching locations and quantity units for new product '{name}'")
+            locations = self._request('GET', '/objects/locations')
+            qu_units = self._request('GET', '/objects/quantity_units')
 
-        location_id = locations[0]['id'] if locations else 1
-        qu_id = qu_units[0]['id'] if qu_units else 1
+            if not locations:
+                error_msg = "Could not get locations from Grocy - API returned empty"
+                logger.error(error_msg)
+                return None, error_msg
 
-        product_data = {
-            'name': name,
-            'description': f'Automatisch erstellt',
-            'location_id': location_id,
-            'qu_id_purchase': qu_id,
-            'qu_id_stock': qu_id,
-            'price': str(price)
-        }
+            if not qu_units:
+                error_msg = "Could not get quantity units from Grocy - API returned empty"
+                logger.error(error_msg)
+                return None, error_msg
 
-        if barcode:
-            product_data['barcode'] = barcode
+            location_id = locations[0]['id']
+            qu_id = qu_units[0]['id']
 
-        result = self._request('POST', '/objects/products', json=product_data)
+            logger.debug(f"Using location_id={location_id}, qu_id={qu_id}")
 
-        if result:
-            new_product = GrocyProduct(result)
-            logger.info(f"Created product: {new_product}")
-            return new_product
+            product_data = {
+                'name': name,
+                'description': f'Automatisch erstellt',
+                'location_id': location_id,
+                'qu_id_purchase': qu_id,
+                'qu_id_stock': qu_id,
+                'price': str(price)
+            }
 
-        return None
+            if barcode:
+                product_data['barcode'] = barcode
+
+            logger.debug(f"Creating product with data: {product_data}")
+            result = self._request('POST', '/objects/products', json=product_data)
+
+            if result:
+                new_product = GrocyProduct(result)
+                logger.info(f"Created product: {new_product}")
+                return new_product, ""
+
+            error_msg = "Grocy API returned empty response for POST /objects/products"
+            logger.error(error_msg)
+            return None, error_msg
+
+        except Exception as e:
+            error_msg = f"Exception creating product '{name}': {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            return None, error_msg

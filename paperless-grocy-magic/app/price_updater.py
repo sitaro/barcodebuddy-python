@@ -108,7 +108,7 @@ class PriceUpdateService:
             new_price = match.receipt_item.price
 
             # Update price
-            success = self.grocy.update_product_price(
+            success, error = self.grocy.update_product_price(
                 product_id=product_id,
                 price=new_price,
                 store=receipt.store
@@ -119,39 +119,32 @@ class PriceUpdateService:
                 logger.info(f"✅ Updated: {match.grocy_product.name} → {new_price:.2f}€")
             else:
                 result.failed_count += 1
-                error_msg = f"Failed to update {match.grocy_product.name}"
+                error_msg = f"Failed to update {match.grocy_product.name}: {error}"
                 result.errors.append(error_msg)
                 logger.error(f"❌ {error_msg}")
 
         # Step 5: Create new products for unmatched items
         logger.info(f"Step 5: Creating {len(unmatched)} new products in Grocy...")
         for item in unmatched:
-            try:
-                # Create product in Grocy
-                new_product = self.grocy.create_product(
-                    name=item.name,
-                    price=item.price
-                )
+            # Create product in Grocy
+            new_product, error = self.grocy.create_product(
+                name=item.name,
+                price=item.price
+            )
 
-                if new_product:
-                    result.created_count += 1
-                    logger.info(f"✨ Created: {new_product.name} ({item.price:.2f}€)")
+            if new_product:
+                result.created_count += 1
+                logger.info(f"✨ Created: {new_product.name} ({item.price:.2f}€)")
 
-                    # Update the match object to reflect creation
-                    for match in matches:
-                        if match.receipt_item == item:
-                            match.grocy_product = new_product
-                            match.was_created = True
-                            break
-                else:
-                    result.unmatched_count += 1
-                    error_msg = f"Failed to create product: {item.name}"
-                    result.errors.append(error_msg)
-                    logger.error(f"❌ {error_msg}")
-
-            except Exception as e:
+                # Update the match object to reflect creation
+                for match in matches:
+                    if match.receipt_item == item:
+                        match.grocy_product = new_product
+                        match.was_created = True
+                        break
+            else:
                 result.unmatched_count += 1
-                error_msg = f"Error creating {item.name}: {str(e)}"
+                error_msg = f"Failed to create {item.name}: {error}"
                 result.errors.append(error_msg)
                 logger.error(f"❌ {error_msg}")
 

@@ -5,6 +5,22 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3-beta] - 2025-11-22
+
+### Fixed
+- **Enhanced error reporting** - Shows actual Grocy API error messages
+- Functions now return detailed error messages instead of boolean failures
+- `update_product_price()` returns `(success, error_message)` tuple
+- `create_product()` returns `(product, error_message)` tuple
+- Error messages include full exception details and API responses
+- Easier debugging when product updates or creation fails
+
+### Technical Details
+- Added exception handling with traceback logging in grocy_client.py
+- Debug logging for locations and quantity_units fetch during product creation
+- Error messages now propagate from Grocy API → Service → UI/Logs
+- User-visible errors show actual failure reasons (permissions, missing fields, etc.)
+
 ## [0.3.2-beta] - 2025-11-22
 
 ### Fixed
