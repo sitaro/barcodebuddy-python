@@ -75,7 +75,7 @@ schema:
   enable_upcdatabase: bool
 
   # Language
-  language: list(en|de|fr|es)
+  language: select(en|de|fr|es)
 
   # Debug Mode
   debug: bool
