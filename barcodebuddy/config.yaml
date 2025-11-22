@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python) (beta)"
-version: "2.12.5-beta"
+version: "2.12.6-beta"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -24,13 +24,6 @@ devices:
   - "/dev/hidraw4:/dev/hidraw4:rwm"
 
 udev: true
-full_access: true
-apparmor: false
-host_ipc: true
-host_pid: true
-privileged:
-  - SYS_ADMIN
-  - SYS_RAWIO
 
 ports:
   "5000/tcp": 5000

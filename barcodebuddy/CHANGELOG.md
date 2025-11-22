@@ -5,6 +5,16 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.6-beta] - 2025-11-22
+
+### Security
+- **Improved Security Rating**: Removed unnecessary privileged permissions
+- Removed `full_access: true` (was granting full host access)
+- Removed `apparmor: false` (now uses AppArmor protection)
+- Removed `host_ipc: true` and `host_pid: true` (unnecessary host access)
+- Removed privileged capabilities `SYS_ADMIN` and `SYS_RAWIO`
+- Scanner access still works via device mapping and udev
+
 ## [2.12.5-beta] - 2025-11-22
 
 ### Changed
