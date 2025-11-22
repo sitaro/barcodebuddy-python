@@ -64,3 +64,12 @@ class Config:
     def enable_upcdatabase(self) -> bool:
         """Check if UPC Database is enabled."""
         return self._config.get('enable_upcdatabase', True)
+
+    @property
+    def language(self) -> Optional[str]:
+        """Get configured language (empty = auto-detect)."""
+        lang = self._config.get('language', '').strip()
+        # Validate language code
+        if lang and lang in ['en', 'de', 'fr', 'es']:
+            return lang
+        return None

@@ -29,10 +29,13 @@ babel = Babel(app)
 
 def get_locale():
     """Determine the best match for supported languages."""
-    # Try to get language from session
+    # Priority 1: Config file (for debugging/forcing language)
+    if config.language:
+        return config.language
+    # Priority 2: Session (user clicked language switcher)
     if 'language' in session:
         return session['language']
-    # Try to get from browser Accept-Language header
+    # Priority 3: Browser Accept-Language header (auto-detect)
     return request.accept_languages.best_match(['en', 'de', 'fr', 'es']) or 'en'
 
 babel.init_app(app, locale_selector=get_locale)
