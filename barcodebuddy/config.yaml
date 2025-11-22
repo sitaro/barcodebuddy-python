@@ -1,5 +1,5 @@
 name: "Barcode Buddy (Python) (beta)"
-version: "2.9.4-beta"
+version: "2.9.5-beta"
 slug: "barcodebuddy-python"
 description: "Python-based Barcode Scanner with Grocy integration"
 arch:
@@ -39,21 +39,35 @@ ingress_port: 5000
 ingress_entry: "/"
 
 options:
+  # Grocy Integration
   grocy_url: ""
   grocy_api_key: ""
-  debug: false
+
+  # Barcode Configuration
   barcode_add: "BBUDDY-ADD"
   barcode_consume: "BBUDDY-CONSUME"
   barcode_quantity_prefix: "BBUDDY-Q-"
+
+  # Product Databases (for unknown barcodes)
   enable_openfoodfacts: true
   enable_upcdatabase: true
 
+  # Debug Mode
+  debug: false
+
 schema:
+  # Grocy Integration
   grocy_url: str
   grocy_api_key: str
-  debug: bool
+
+  # Barcode Configuration
   barcode_add: str
   barcode_consume: str
   barcode_quantity_prefix: str
+
+  # Product Databases
   enable_openfoodfacts: bool
   enable_upcdatabase: bool
+
+  # Debug Mode
+  debug: bool
