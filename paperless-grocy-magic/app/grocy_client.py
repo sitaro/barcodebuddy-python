@@ -1,0 +1,158 @@
+"""Grocy API client for product and price management."""
+import logging
+import requests
+from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class GrocyProduct:
+    """Represents a Grocy product."""
+
+    def __init__(self, data: Dict):
+        self.id = data.get('id')
+        self.name = data.get('name', '')
+        self.description = data.get('description', '')
+        self.barcode = data.get('barcode', '')
+        self.price = float(data.get('price', 0) or 0)
+        self.location_id = data.get('location_id')
+        self.qu_id_purchase = data.get('qu_id_purchase')
+        self.qu_id_stock = data.get('qu_id_stock')
+
+    def __repr__(self):
+        return f"GrocyProduct(id={self.id}, name={self.name}, price={self.price}€)"
+
+
+class GrocyClient:
+    """Client for interacting with Grocy API."""
+
+    def __init__(self, base_url: str, api_key: str):
+        self.base_url = base_url.rstrip('/')
+        self.api_key = api_key
+        self.session = requests.Session()
+        self.session.headers.update({
+            'GROCY-API-KEY': api_key,
+            'Content-Type': 'application/json'
+        })
+
+    def _request(self, method: str, endpoint: str, **kwargs) -> Optional[Dict]:
+        """Make API request to Grocy."""
+        url = f"{self.base_url}/api{endpoint}"
+
+        try:
+            response = self.session.request(method, url, timeout=10, **kwargs)
+            response.raise_for_status()
+
+            if response.status_code == 204:  # No content
+                return {}
+
+            return response.json()
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Grocy API error ({method} {endpoint}): {e}")
+            return None
+
+    def test_connection(self) -> bool:
+        """Test connection to Grocy API."""
+        result = self._request('GET', '/system/info')
+        if result:
+            logger.info(f"Connected to Grocy {result.get('grocy_version', {}).get('Version', 'unknown')}")
+            return True
+        return False
+
+    def get_all_products(self) -> List[GrocyProduct]:
+        """Get all products from Grocy."""
+        data = self._request('GET', '/objects/products')
+        if data:
+            products = [GrocyProduct(p) for p in data]
+            logger.info(f"Retrieved {len(products)} products from Grocy")
+            return products
+        return []
+
+    def search_products(self, query: str) -> List[GrocyProduct]:
+        """Search for products by name."""
+        all_products = self.get_all_products()
+        query_lower = query.lower()
+
+        # Simple substring search
+        matches = [p for p in all_products if query_lower in p.name.lower()]
+        logger.debug(f"Search '{query}': {len(matches)} matches")
+        return matches
+
+    def get_product(self, product_id: int) -> Optional[GrocyProduct]:
+        """Get a specific product by ID."""
+        data = self._request('GET', f'/objects/products/{product_id}')
+        if data:
+            return GrocyProduct(data)
+        return None
+
+    def update_product_price(self, product_id: int, price: float, store: str = None) -> bool:
+        """Update product price in Grocy."""
+        # Get current product data
+        product = self.get_product(product_id)
+        if not product:
+            logger.error(f"Product {product_id} not found")
+            return False
+
+        # Update price
+        update_data = {
+            'price': str(price)  # Grocy expects string
+        }
+
+        # Add store to description if provided
+        if store:
+            desc = product.description or ""
+            price_info = f"Preis: {price:.2f}€ ({store})"
+
+            # Check if description already has price info
+            if "Preis:" in desc:
+                # Replace existing price info
+                import re
+                desc = re.sub(r'Preis:.*?€\s*\([^)]+\)', price_info, desc)
+            else:
+                # Append price info
+                desc = f"{desc}\n{price_info}".strip()
+
+            update_data['description'] = desc
+
+        result = self._request('PUT', f'/objects/products/{product_id}', json=update_data)
+
+        if result:
+            logger.info(f"Updated price for product {product_id} ({product.name}): {price:.2f}€")
+            return True
+
+        return False
+
+    def create_product(self, name: str, price: float = 0.0, barcode: str = None) -> Optional[GrocyProduct]:
+        """Create a new product in Grocy."""
+        # Get default location and quantity unit
+        locations = self._request('GET', '/objects/locations')
+        qu_units = self._request('GET', '/objects/quantity_units')
+
+        if not locations or not qu_units:
+            logger.error("Could not get locations or quantity units")
+            return None
+
+        location_id = locations[0]['id'] if locations else 1
+        qu_id = qu_units[0]['id'] if qu_units else 1
+
+        product_data = {
+            'name': name,
+            'description': f'Automatisch erstellt',
+            'location_id': location_id,
+            'qu_id_purchase': qu_id,
+            'qu_id_stock': qu_id,
+            'price': str(price)
+        }
+
+        if barcode:
+            product_data['barcode'] = barcode
+
+        result = self._request('POST', '/objects/products', json=product_data)
+
+        if result:
+            new_product = GrocyProduct(result)
+            logger.info(f"Created product: {new_product}")
+            return new_product
+
+        return None

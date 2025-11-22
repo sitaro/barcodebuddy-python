@@ -5,6 +5,30 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-beta] - 2025-11-22
+
+### Added
+- **Receipt Parser**: Parse REWE receipts from OCR text
+- **Grocy API Client**: Full integration with Grocy for product management
+- **Fuzzy Product Matching**: Match receipt items to Grocy products using fuzzywuzzy
+- **Price Update Service**: Automatically update Grocy product prices from receipts
+- **API Endpoint**: `/api/process-receipt` for manual receipt processing
+- **Example Receipt**: Real REWE receipt for testing (examples/)
+- **Test Script**: Verify parser with real data
+
+### Features
+- Extract products and prices from REWE receipts
+- Handle weight-based items (kg pricing)
+- Match receipt items to Grocy products (configurable threshold)
+- Update Grocy prices with store and date information
+- Detailed API responses with match scores and statistics
+
+### Technical
+- Receipt parsing with regex patterns
+- Multi-strategy fuzzy matching (ratio, partial, token sort, token set)
+- Product cleaning and normalization
+- Comprehensive logging and error handling
+
 ## [0.1.0-beta] - 2025-11-22
 
 ### Added
