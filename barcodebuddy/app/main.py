@@ -362,14 +362,13 @@ def create_product():
 
 @app.route('/api/download-quantity-barcodes')
 def download_quantity_barcodes():
-    """Download PDF with quantity barcodes."""
+    """View PDF with quantity barcodes in browser."""
     try:
         pdf_buffer = generate_quantity_barcodes_pdf()
         return send_file(
             pdf_buffer,
             mimetype='application/pdf',
-            as_attachment=True,
-            download_name='quantity_barcodes.pdf'
+            as_attachment=False
         )
     except Exception as e:
         logger.error(f"Error generating PDF: {e}")
