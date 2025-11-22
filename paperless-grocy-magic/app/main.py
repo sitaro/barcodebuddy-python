@@ -38,19 +38,157 @@ else:
 
 @app.route('/')
 def index():
-    """Main dashboard."""
-    return jsonify({
-        'name': 'Paperless Grocy Magic',
-        'version': '0.2.3-beta',
-        'status': 'running',
-        'timestamp': datetime.now().isoformat(),
-        'config': {
-            'paperless_configured': bool(config.paperless_url and config.paperless_api_key),
-            'grocy_configured': bool(config.grocy_url and config.grocy_api_key),
-            'auto_process': config.auto_process_receipts,
-            'interval_hours': config.process_interval_hours
+    """Main dashboard with test UI."""
+    return """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paperless Grocy Magic - Test UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; }
+        h1 { color: #333; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { border: 1px solid #ddd; border-radius: 8px; padding: 20px; }
+        textarea { width: 100%; height: 300px; font-family: monospace; font-size: 12px; }
+        button { background: #4CAF50; color: white; padding: 12px 24px; border: none;
+                 border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px 5px; }
+        button:hover { background: #45a049; }
+        button.secondary { background: #2196F3; }
+        button.secondary:hover { background: #0b7dda; }
+        #result { background: #f5f5f5; padding: 15px; border-radius: 4px;
+                  white-space: pre-wrap; font-family: monospace; font-size: 12px;
+                  max-height: 500px; overflow-y: auto; }
+        .status { margin: 10px 0; padding: 10px; background: #e3f2fd; border-radius: 4px; }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>🪄 Paperless Grocy Magic - Test UI</h1>
+
+    <div class="status" id="status">Loading status...</div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>📄 Receipt Text</h2>
+            <textarea id="receiptText">REWE MARKT
+Homburger Landstr. 340-352
+60433 Frankfurter-Berg
+UID Nr.: DE812706034
+EUR
+SW-VORDERHAXE 7,98 B
+BIERSCHINKEN 1,29 B
+SCHUPFNUDELN 1,79 B
+KARTOFFEL FESTK 1,99 B
+GELBE ZWIEBELN 1,09 B
+Deutschland / Hk 0,44 B
+ 0,340 kg x 1,29 EUR/kg
+BW SENFK 2,79 B
+GAULOISES ROT 23,00 A *
+--------------------------------------
+SUMME EUR 40,37
+Datum: 22.11.2025</textarea>
+
+            <div>
+                <button onclick="processReceipt()">🚀 Process Receipt</button>
+                <button onclick="clearResult()" class="secondary">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📊 Result</h2>
+            <div id="result">Click "Process Receipt" to test...</div>
+        </div>
+    </div>
+
+    <script>
+        // Load status on page load
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                const grocy = data.grocy.connected ? '✅ Connected' : '❌ Not connected';
+                const products = data.grocy.product_count ? ` (${data.grocy.product_count} products)` : '';
+                document.getElementById('status').innerHTML =
+                    `<strong>Status:</strong> ${data.status} |
+                     <strong>Version:</strong> ${data.version} |
+                     <strong>Grocy:</strong> ${grocy}${products}`;
+            })
+            .catch(e => {
+                document.getElementById('status').innerHTML =
+                    '<span class="error">Error loading status</span>';
+            });
+
+        function processReceipt() {
+            const text = document.getElementById('receiptText').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = '⏳ Processing receipt...';
+
+            fetch('/api/process-receipt', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    text: text,
+                    store: 'rewe'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                // Format result nicely
+                let output = '';
+
+                if (data.success) {
+                    output += `<span class="success">✅ SUCCESS!</span>\\n\\n`;
+                } else {
+                    output += `<span class="error">❌ FAILED</span>\\n\\n`;
+                }
+
+                output += `📍 Store: ${data.store || 'N/A'}\\n`;
+                output += `📅 Date: ${data.date || 'N/A'}\\n`;
+                output += `📦 Total Items: ${data.total_items || 0}\\n`;
+                output += `✅ Updated: ${data.updated || 0}\\n`;
+                output += `❌ Failed: ${data.failed || 0}\\n`;
+                output += `⚠️  Unmatched: ${data.unmatched || 0}\\n\\n`;
+
+                if (data.matches && data.matches.length > 0) {
+                    output += '📋 Matches:\\n';
+                    output += '─'.repeat(60) + '\\n';
+
+                    data.matches.forEach((m, i) => {
+                        const status = m.matched ? '✅' : '❌';
+                        output += `${i+1}. ${status} ${m.receipt_item}\\n`;
+                        if (m.matched) {
+                            output += `   → ${m.grocy_product} (score: ${m.score})\\n`;
+                            output += `   💰 Price: ${m.price.toFixed(2)}€\\n`;
+                        } else {
+                            output += `   ⚠️  No match found in Grocy\\n`;
+                        }
+                        output += '\\n';
+                    });
+                }
+
+                if (data.errors && data.errors.length > 0) {
+                    output += '\\n🚨 Errors:\\n';
+                    data.errors.forEach(e => output += `  - ${e}\\n`);
+                }
+
+                output += '\\n' + '─'.repeat(60) + '\\n';
+                output += 'Raw JSON:\\n' + JSON.stringify(data, null, 2);
+
+                resultDiv.innerHTML = output;
+            })
+            .catch(e => {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
+            });
         }
-    })
+
+        function clearResult() {
+            document.getElementById('result').innerHTML = 'Click "Process Receipt" to test...';
+        }
+    </script>
+</body>
+</html>
+"""
 
 
 @app.route('/api/status')

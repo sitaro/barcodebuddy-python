@@ -5,6 +5,16 @@ All notable changes to Paperless Grocy Magic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4-beta] - 2025-11-22
+
+### Added
+- **Web Test UI** - Interactive HTML interface for testing receipt processing
+- Pre-filled with real REWE receipt example
+- Real-time status display (Grocy connection, product count)
+- Beautiful formatted results with match details
+- One-click testing from browser
+- No need for curl or Postman anymore!
+
 ## [0.2.3-beta] - 2025-11-22
 
 ### Changed
