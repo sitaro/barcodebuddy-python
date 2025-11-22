@@ -5,7 +5,12 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.12.6-beta] - 2025-11-22
+## [2.13.1-beta] - 2025-11-22
+
+### Changed
+- Barcode format option now displays as dropdown list in Home Assistant UI
+- Improved configuration UX (prevents typos in barcode_format setting)
+
 ## [2.13.0-beta] - 2025-11-22
 
 ### Added
