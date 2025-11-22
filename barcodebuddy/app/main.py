@@ -1,5 +1,5 @@
 """Main Flask application."""
-from flask import Flask, render_template, jsonify, request, session
+from flask import Flask, render_template, jsonify, request, session, send_file
 from flask_babel import Babel, gettext
 import logging
 import sys
@@ -10,6 +10,7 @@ from grocy import GrocyClient
 from scanner import ScannerHandler
 from openfoodfacts import OpenFoodFactsClient
 from upcdatabase import UPCDatabaseClient
+from pdf_generator import generate_quantity_barcodes_pdf
 from datetime import datetime
 
 # Setup logging
@@ -357,6 +358,21 @@ def create_product():
 
     except Exception as e:
         logger.error(f"Error creating product: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/download-quantity-barcodes')
+def download_quantity_barcodes():
+    """Download PDF with quantity barcodes."""
+    try:
+        pdf_buffer = generate_quantity_barcodes_pdf()
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='quantity_barcodes.pdf'
+        )
+    except Exception as e:
+        logger.error(f"Error generating PDF: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':

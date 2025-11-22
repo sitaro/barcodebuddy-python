@@ -5,6 +5,15 @@ All notable changes to Barcode Buddy (Python) will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0-beta] - 2025-11-22
+
+### Added
+- **PDF Download**: Generate PDF with quantity barcodes (1-9, 10, 20, 30)
+- New button in UI to download printable quantity barcodes
+- PDF generator using reportlab and python-barcode libraries
+- Code128 barcode format for quantity codes (BBUDDY-Q-X)
+- Multi-language support for PDF download button (en/de/fr/es)
+
 ## [2.11.1-beta] - 2025-11-22
 
 ### Fixed

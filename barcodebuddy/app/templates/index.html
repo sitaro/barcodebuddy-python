@@ -158,6 +158,11 @@
                 <input type="text" id="barcode-input" placeholder="{{ _('enter_barcode') }}" autofocus>
                 <button onclick="submitBarcode()">{{ _('add') }}</button>
             </div>
+            <div style="margin-bottom: 15px;">
+                <button onclick="downloadQuantityBarcodes()" style="width: 100%; background: #10b981;">
+                    📄 {{ _('download_quantity_barcodes') }}
+                </button>
+            </div>
             <div class="info-box">
                 <strong>{{ _('active_scanner_devices') }}:</strong>
                 {% if scanner_devices %}
@@ -196,6 +201,10 @@
             network_error: "{{ _('network_error') }}",
             no_scans_yet: "{{ _('no_scans_yet') }}"
         };
+
+        function downloadQuantityBarcodes() {
+            window.location.href = 'api/download-quantity-barcodes';
+        }
 
         function submitBarcode() {
             console.log('submitBarcode called');

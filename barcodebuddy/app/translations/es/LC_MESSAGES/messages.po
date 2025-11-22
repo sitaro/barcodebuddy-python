@@ -63,3 +63,6 @@ msgstr "No se pudo crear el producto"
 
 msgid "network_error"
 msgstr "Error de red. Por favor intente de nuevo."
+
+msgid "download_quantity_barcodes"
+msgstr "Descargar Códigos de Barras de Cantidad (PDF)"
