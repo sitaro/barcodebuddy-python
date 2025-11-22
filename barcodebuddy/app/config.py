@@ -19,11 +19,6 @@ class Config:
         return {}
 
     @property
-    def scanner_device(self) -> str:
-        """Get scanner device path."""
-        return self._config.get('scanner_device', '/dev/input/event3')
-
-    @property
     def grocy_url(self) -> Optional[str]:
         """Get Grocy URL."""
         url = self._config.get('grocy_url', '').strip()

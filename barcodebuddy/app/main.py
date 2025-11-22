@@ -222,8 +222,8 @@ def handle_barcode(barcode: str):
     if len(recent_scans) > 50:
         recent_scans.pop()
 
-# Initialize scanner
-scanner = ScannerHandler(config.scanner_device, handle_barcode)
+# Initialize scanner (auto-detects all available devices)
+scanner = ScannerHandler(None, handle_barcode)
 scanner.start()
 
 @app.route('/')
@@ -325,7 +325,7 @@ def create_product():
 
 if __name__ == '__main__':
     logger.info("🚀 Starting Barcode Buddy (Python)")
-    logger.info(f"📱 Scanner device: {config.scanner_device}")
+    logger.info(f"📱 Scanner: Auto-detecting all available devices")
     logger.info(f"🔗 Grocy: {'✅ Configured' if config.has_grocy else '❌ Not configured'}")
 
     app.run(host='0.0.0.0', port=5000)
