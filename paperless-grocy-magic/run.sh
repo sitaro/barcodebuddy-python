@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "🪄 Starting Paperless Grocy Magic v0.2.4-beta"
+echo "🪄 Starting Paperless Grocy Magic v0.2.5-beta"
 echo "============================================="
 
 # Show configuration
